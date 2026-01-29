@@ -1,15 +1,19 @@
 Package: dxutils
 Type: Package
-Title: DNA nexus command line utility extensions
+Title: DNA nexus command line utility wrappers and extensions
 Version: 0.1.0
 Authors@R: person(given="Scott", family="Ritchie", 
                   email="sritchie73@gmail.com", 
                   role=c("aut", "cre"),
                   comment=(ORCID="0000-0002-8454-9548"))
-Description: Extensions that enhance the capabilities of the DNA nexus command 
-    line utilities, particularly with a view towards enabling checkpointing for 
-    jobs run on low-priority instances which may be temporarily killed and 
-    restarted by AWS at any time, including during file upload.
+URL: https://github.com/sritchie73/dxutils
+Description: Utilities for working with DNA nexus projects in R. Provides wrapper
+    functions for common DNA nexus command line utilities and extends their 
+    functionality in ways that enhance user convenience and facilitate 
+    checkpointing for low-priority jobs.
 License: MIT + file LICENSE
 Encoding: UTF-8
-LazyData: true
+Config/Needs/development: roxygen2
+OS_type: unix
+SystemRequirements: dxtoolkit (https://github.com/dnanexus/dx-toolkit)
+RoxygenNote: 7.3.3

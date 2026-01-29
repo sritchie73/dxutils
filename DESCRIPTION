@@ -1,0 +1,15 @@
+Package: dxutils
+Type: Package
+Title: DNA nexus command line utility extensions
+Version: 0.1.0
+Authors@R: person(given="Scott", family="Ritchie", 
+                  email="sritchie73@gmail.com", 
+                  role=c("aut", "cre"),
+                  comment=(ORCID="0000-0002-8454-9548"))
+Description: Extensions that enhance the capabilities of the DNA nexus command 
+    line utilities, particularly with a view towards enabling checkpointing for 
+    jobs run on low-priority instances which may be temporarily killed and 
+    restarted by AWS at any time, including during file upload.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true

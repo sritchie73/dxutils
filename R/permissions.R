@@ -1,12 +1,15 @@
 #' Determine access permissions of a DNA nexus project
 #'
 #' @inheritParams remote_path
+#' @importFrom jsonlite fromJSON
 #'
 #' @returns "NONE", "VIEW", "CONTRIBUTE", or "ADMINISTER", as an ordered factor.
 dx_get_project_permissions <- function(remote_path) {
   project_id <- dx_get_project(remote_path)
-  line <- system(sprintf("dx describe %s | grep 'Access level'", project_id), intern=TRUE)
-  ordered(gsub("Access level +", "", line), levels=c("NONE", "VIEW", "CONTRIBUTE", "ADMINISTER"))
+  ordered(
+    fromJSON(system(sprintf("dx describe '%s' --json", project_id), intern=TRUE))$level,
+    levels=c("NONE", "VIEW", "CONTRIBUTE", "ADMINISTER")
+  )
 }
 
 #' Determine whether a DNA nexus project has its Protected attribute set to true
@@ -17,11 +20,12 @@ dx_get_project_permissions <- function(remote_path) {
 #' DNA nexus projects may be configured so that object deletion is restricted to
 #' administrators of the project.
 #'
+#' @importFrom jsonlite fromJSON
+#'
 #' @returns Logical; either TRUE or FALSE.
 dx_project_protected <- function(remote_path) {
   project_id <- dx_get_project(remote_path)
-  line <- system(sprintf("dx describe %s | grep 'Protected'", project_id), intern=TRUE)
-  as.logical(toupper(gsub("Protected +", "", line)))
+  fromJSON(system(sprintf("dx describe '%s' --json", project_id), intern=TRUE))$protected
 }
 
 #' Checks whether the user can delete files on a DNA nexus project

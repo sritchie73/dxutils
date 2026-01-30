@@ -3,3 +3,4 @@
 export(assert_dx_exists)
 export(dx_exists)
 export(dx_rm)
+importFrom(jsonlite,fromJSON)

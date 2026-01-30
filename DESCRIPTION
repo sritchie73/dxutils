@@ -12,6 +12,8 @@ Description: Utilities for working with DNA nexus projects in R. Provides wrappe
     functionality in ways that enhance user convenience and facilitate 
     checkpointing for low-priority jobs.
 License: MIT + file LICENSE
+Imports:
+    jsonlite
 Encoding: UTF-8
 Config/Needs/development: roxygen2,roxygen2md
 OS_type: unix

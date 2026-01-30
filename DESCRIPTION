@@ -13,7 +13,8 @@ Description: Utilities for working with DNA nexus projects in R. Provides wrappe
     checkpointing for low-priority jobs.
 License: MIT + file LICENSE
 Encoding: UTF-8
-Config/Needs/development: roxygen2
+Config/Needs/development: roxygen2,roxygen2md
 OS_type: unix
 SystemRequirements: dxtoolkit (https://github.com/dnanexus/dx-toolkit)
 RoxygenNote: 7.3.3
+Roxygen: list(markdown = TRUE)

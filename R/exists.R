@@ -1,7 +1,7 @@
 #' Check whether an object or folder exists on a DNA nexus project
 #'
 #' @inheritParams remote_path
-#
+#'
 #' @returns Logical; TRUE or FALSE.
 #'
 #' @export

@@ -14,8 +14,8 @@ unless otherwise specified.}
 }
 \value{
 "none" if nothing exists at the 'remote_path' provided, "folder" if
- the 'remote_path' points to a folder, or the Class attribute (e.g. "file")
- if the  'remote_path' points to a DNA nexus object.
+the 'remote_path' points to a folder, or the Class attribute (e.g. "file")
+if the 'remote_path' points to a DNA nexus object.
 }
 \description{
 Determine the type of entity at a location on a DNA nexus project

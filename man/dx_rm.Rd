@@ -19,18 +19,18 @@ permissions, moves the file or folder to the trash/ folder at the root folder
 of the project, creating that folder if necessary.
 }
 \details{
-Where the user has the necessary permissions to delete files, runs `dx rm -rfa`
+Where the user has the necessary permissions to delete files, runs \verb{dx rm -rfa}
 on the provided 'remote_path'.
 
 If the user does not have delete permissions and the remote path is a DNA
-nexus object (e.g. a file), runs `dx mv` to relocate the object to the trash/
+nexus object (e.g. a file), runs \verb{dx mv} to relocate the object to the trash/
 folder at the project root.
 
 If the user does not have delete permissions and the remote path is a folder,
 renames the folder to include the current date and time, then moves that
-folder to trash/ with `dx mv`. The renaming step ensures that the folder name
+folder to trash/ with \verb{dx mv}. The renaming step ensures that the folder name
 is unique, which necessary to prevent errors when moving to the trash/ folder
 as there cannot be multiple folders with the same name in one location on a
-DNA nexus project, and `dx mv` does not support merging two folders with the
+DNA nexus project, and \verb{dx mv} does not support merging two folders with the
 same name.
 }

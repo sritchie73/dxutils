@@ -24,10 +24,3 @@ NULL
 #'
 #' @name remote_path
 NULL
-
-#' @param from_metadata logical; if TRUE, assumes the `remote_path` actually
-#'    contains the metadata associated with that location extracted by
-#'    [dx_get_metadata()]
-#'
-#' @name from_metadata
-NULL

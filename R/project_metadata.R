@@ -37,20 +37,25 @@ dx_get_project_metadata <- function(remote_path) {
   return(fromJSON(metadata))
 }
 
+#' Get the unique ID of a DNA nexus project
+#'
+#' @param metadata project metadata extracted by the `dx_get_project_metadata`
+#'   function
+#'
+#' @returns an DNA nexus project ID
+dx_get_project_id <- function(metadata) {
+  metadata$id
+}
+
 #' Determine access permissions of a DNA nexus project
 #'
-#' @inheritParams remote_path
-#' @inheritParams from_metadata
+#' @param metadata project metadata extracted by the `dx_get_project_metadata`
+#'    function
 #'
 #' @returns "NONE", "VIEW", "CONTRIBUTE", or "ADMINISTER", as an ordered factor.
 #'
 #' @importFrom jsonlite fromJSON
-dx_get_project_permissions <- function(remote_path, from_metadata=FALSE) {
-  if (from_metadata) {
-    metadata <- remote_path
-  } else {
-    metadata <- dx_get_project_metadata(remote_path)
-  }
+dx_get_project_permissions <- function(metadata) {
   ordered(
     fromJSON(metadata)$level,
     levels=c("NONE", "VIEW", "CONTRIBUTE", "ADMINISTER")
@@ -59,8 +64,8 @@ dx_get_project_permissions <- function(remote_path, from_metadata=FALSE) {
 
 #' Checks whether the user can delete files on a DNA nexus project
 #'
-#' @inheritParams remote_path
-#' @inheritParams from_metadata
+#' @param metadata project metadata extracted by the `dx_get_project_metadata`
+#'   function
 #'
 #' @details
 #' Returns TRUE if the user has at least "CONTRIBUTE" permissions, or if the
@@ -68,31 +73,26 @@ dx_get_project_permissions <- function(remote_path, from_metadata=FALSE) {
 #' permissions.
 #'
 #' @returns Logical; either TRUE or FALSE.
-dx_user_can_rm <- function(remote_path, from_metadata=FALSE) {
-  if (from_metadata) {
-    metadata <- remote_path
-  } else {
-    metadata <- dx_get_project_metadata(remote_path)
-  }
+dx_user_can_rm <- function(metadata) {
   metadata$level == "ADMINISTER" || (metadata$level == "CONTRIBUTE" && !metadata$protected)
 }
 
 #' Error if the user does not has sufficient permissions for a given operation
 #'
-#' @inheritParams remote_path
+#' @param metadata project metadata extracted by the `dx_get_project_metadata`
+#'   function
 #' @param minimum_permissions minimum permissions user must have on the DNA nexus
-#'   project. Must be one of "VIEW", "CONTRIBUTE" or "ADMINISITER".
+#'   project. Must be one of "VIEW", "CONTRIBUTE" or "ADMINISITER"
 #'
 #' @returns NULL
-assert_dx_project_permissions <- function(remote_path, minimum_permissions) {
+assert_dx_project_permissions <- function(metadata, minimum_permissions) {
   valid_permissions <- c("VIEW", "CONTRIBUTE", "ADMINISTER")
   if (!(minimum_permissions %in% valid_permissions)) {
     stop("'minimum_permissions' must be one of \"VIEW\", \"CONTRIBUTE\" or \"ADMINISITER\"")
   }
-  metadata <- dx_get_project_metadata(remote_path)
-  user_permissions <- dx_get_project_permissions(metadata, from_metadata=TRUE)
+  user_permissions <- dx_get_project_permissions(metadata)
   if (user_permissions < minimum_permissions) {
-    stop("Unable to modify files in project ", metadata$id,
+    stop("Unable to modify files in project ", dx_get_project_id(metadata),
          ": user permissions are ", user_permissions, ", at least ",
          minimum_permissions, "required")
   }

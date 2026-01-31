@@ -4,13 +4,11 @@
 \alias{dx_get_project_permissions}
 \title{Determine access permissions of a DNA nexus project}
 \usage{
-dx_get_project_permissions(remote_path)
+dx_get_project_permissions(metadata)
 }
 \arguments{
-\item{remote_path}{DNA nexus file identifier or DNA nexus file/folder path
-(Syntax: "projectID:/folder/path", "/folder/path", or "folder/path").
-Paths are relative to the current working directory in the current project
-unless otherwise specified.}
+\item{metadata}{project metadata extracted by the \code{dx_get_project_metadata}
+function}
 }
 \value{
 "NONE", "VIEW", "CONTRIBUTE", or "ADMINISTER", as an ordered factor.

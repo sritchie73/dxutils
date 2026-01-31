@@ -28,13 +28,15 @@
 #'
 #' @export
 dx_rm <- function(remote_path) {
-  assert_dx_project_permissions(remote_path, "CONTRIBUTE")
-  if (dx_user_can_rm(remote_path)) {
+  project_metadata <- dx_get_project_metadata(remote_path)
+  assert_dx_project_permissions(project_metadata, "CONTRIBUTE")
+  if (dx_user_can_rm(project_metadata)) {
     system(sprintf("dx rm -rfa '%s'", remote_path))
   } else {
-    project_id <- dx_get_project(remote_path)
+    project_id <- dx_get_project_id(project_metadata)
     system(sprintf("dx mkdir -p %s:trash", project_id))
-    if (dx_type(remote_path) == "folder") {
+    entity_metadata <- dx_get_metadata(remote_path)
+    if (dx_type(entity_metadata) == "folder") {
       uid <- format(Sys.time(), "%Y-%m-%d-%H-%M-%S") # can't have multiple folders of the same name
       system(sprintf("dx mv '%s' '%s-%s'", remote_path, remote_path, uid))
       system(sprintf("dx mv '%s-%s' %s:trash/", remote_path, uid, project_id))

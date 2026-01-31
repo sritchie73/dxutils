@@ -4,7 +4,7 @@
 #' file if it has an "uploaded_by" property matching the current DNA nexus job
 #' ID (see Details).
 #'
-#' @inherit file_states
+#' @inherit file_states details
 #'
 #' @inheritParams remote_path
 #'
@@ -71,20 +71,13 @@ dx_get_metadata <- function(remote_path) {
 
 #' Determine the type of entity at a location on a DNA nexus project
 #'
-#' @inheritParams remote_path
-#' @inheritParams from_metadata
+#' @param metadata file metadata extracted by the internal `dx_get_metadata`
+#'    function
 #'
 #' @returns "none" if nothing exists at the 'remote_path' provided, "folder" if
 #'  the 'remote_path' points to a folder, or the Class attribute (e.g. "file")
 #'  if the 'remote_path' points to a DNA nexus object.
-dx_type <- function(remote_path, from_metadata=FALSE) {
-  # Get metadata associated with location on DNA nexus
-  if (from_metadata) {
-    metadata <- remote_path
-  } else {
-    metadata <- dx_get_metadata(remote_path)
-  }
-
+dx_type <- function(metadata) {
   # Extract relevant information
   if (is.null(names(metadata))) {
     return(metadata) # "none" or "folder"
@@ -95,24 +88,16 @@ dx_type <- function(remote_path, from_metadata=FALSE) {
 
 #' Get the state of a file (or other data object) on DNA nexus
 #'
-#' @inherit file_states
+#' @inherit file_states details
 #'
-#' @inheritParams remote_path
-#' @inheritParams from_metadata
+#' @param metadata file metadata extracted by the `dx_get_metadata` function
 #'
 #' @returns "none" if the file does not exist (or has been deleted; see Details),
 #'   "folder" if the location points to a folder, or one of "closed",
 #'   "closing", or "open" (see Details).
 #'
 #' @importFrom jsonlite fromJSON
-dx_state <- function(remote_path, from_metadata=FALSE) {
-  # Get metadata associated with location on DNA nexus
-  if (from_metadata) {
-    metadata <- remote_path
-  } else {
-    metadata <- dx_get_metadata(remote_path)
-  }
-
+dx_state <- function(metadata) {
   # Extract relevant information
   if (is.null(names(metadata))) {
     return(metadata) # "none" or "folder"
@@ -123,7 +108,7 @@ dx_state <- function(remote_path, from_metadata=FALSE) {
 
 #' Check whether a file or folder exists on a DNA nexus project
 #'
-#' @inherit file_states
+#' @inherit file_states details
 #'
 #' @inheritParams remote_path
 #' @param incomplete logical; if the 'remote_path' points to a file that is
@@ -138,7 +123,8 @@ dx_exists <- function(remote_path, incomplete=TRUE) {
   stopifnot(length(incomplete) == 1 && incomplete %in% c(TRUE, FALSE))
 
   # Determine state of object, if one exists, at the remote path
-  remote_state <- dx_state(remote_path)
+  metadata <- dx_get_metadata(remote_path)
+  remote_state <- dx_state(metadata)
 
   if (remote_state == "none") {
     return(FALSE)
@@ -151,7 +137,7 @@ dx_exists <- function(remote_path, incomplete=TRUE) {
 
 #' Throw an error if the requested object or folder does not exist on DNA nexus
 #'
-#' @inherit file_states
+#' @inherit file_states details
 #'
 #' @inherit dx_exists params
 #'

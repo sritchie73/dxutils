@@ -4,17 +4,10 @@
 \alias{dx_state}
 \title{Get the state of a file (or other data object) on DNA nexus}
 \usage{
-dx_state(remote_path, from_metadata = FALSE)
+dx_state(metadata)
 }
 \arguments{
-\item{remote_path}{DNA nexus file identifier or DNA nexus file/folder path
-(Syntax: "projectID:/folder/path", "/folder/path", or "folder/path").
-Paths are relative to the current working directory in the current project
-unless otherwise specified.}
-
-\item{from_metadata}{logical; if TRUE, assumes the \code{remote_path} actually
-contains the metadata associated with that location extracted by
-\code{\link[=dx_get_metadata]{dx_get_metadata()}}}
+\item{metadata}{file metadata extracted by the \code{dx_get_metadata} function}
 }
 \value{
 "none" if the file does not exist (or has been deleted; see Details),
@@ -24,20 +17,3 @@ contains the metadata associated with that location extracted by
 \description{
 Get the state of a file (or other data object) on DNA nexus
 }
-\section{File states on DNA nexus}{
-Files on DNA nexus can be in three possible states: "closed", "closing", or
-"open". Files in the "closed" state are those that are complete and not being
-actively written to by \verb{dx upload}. Files in the "closing" state are those
-where \verb{dx upload} has finished, and DNA nexus is now finalizing the file.
-Files in the "open" state are those that are being actively written to by a
-\verb{dx upload} process, or where a \verb{dx upload} process was killed part way
-through an upload, e.g. when a low-priority job is interrupted and restarted
-by AWS.
-
-To help distinguish between these scenarios and to facilitate checkpointing,
-the \code{\link[=dx_upload]{dx_upload()}} function attaches the job ID to the each file as a property
-named 'uploaded_by' if run from a DNA nexus job (e.g. from a remote cloud
-workstation) so that restarted jobs can identify files which were interrupted
-mid-upload and remove them when next queried.
-}
-

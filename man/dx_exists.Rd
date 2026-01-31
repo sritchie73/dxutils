@@ -22,20 +22,3 @@ Logical; TRUE or FALSE.
 \description{
 Check whether a file or folder exists on a DNA nexus project
 }
-\section{File states on DNA nexus}{
-Files on DNA nexus can be in three possible states: "closed", "closing", or
-"open". Files in the "closed" state are those that are complete and not being
-actively written to by \verb{dx upload}. Files in the "closing" state are those
-where \verb{dx upload} has finished, and DNA nexus is now finalizing the file.
-Files in the "open" state are those that are being actively written to by a
-\verb{dx upload} process, or where a \verb{dx upload} process was killed part way
-through an upload, e.g. when a low-priority job is interrupted and restarted
-by AWS.
-
-To help distinguish between these scenarios and to facilitate checkpointing,
-the \code{\link[=dx_upload]{dx_upload()}} function attaches the job ID to the each file as a property
-named 'uploaded_by' if run from a DNA nexus job (e.g. from a remote cloud
-workstation) so that restarted jobs can identify files which were interrupted
-mid-upload and remove them when next queried.
-}
-

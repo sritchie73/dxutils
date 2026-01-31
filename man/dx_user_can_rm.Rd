@@ -4,13 +4,11 @@
 \alias{dx_user_can_rm}
 \title{Checks whether the user can delete files on a DNA nexus project}
 \usage{
-dx_user_can_rm(remote_path)
+dx_user_can_rm(metadata)
 }
 \arguments{
-\item{remote_path}{DNA nexus file identifier or DNA nexus file/folder path
-(Syntax: "projectID:/folder/path", "/folder/path", or "folder/path").
-Paths are relative to the current working directory in the current project
-unless otherwise specified.}
+\item{metadata}{project metadata extracted by the \code{dx_get_project_metadata}
+function}
 }
 \value{
 Logical; either TRUE or FALSE.

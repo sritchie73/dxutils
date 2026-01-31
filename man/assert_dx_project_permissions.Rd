@@ -4,16 +4,14 @@
 \alias{assert_dx_project_permissions}
 \title{Error if the user does not has sufficient permissions for a given operation}
 \usage{
-assert_dx_project_permissions(remote_path, minimum_permissions)
+assert_dx_project_permissions(metadata, minimum_permissions)
 }
 \arguments{
-\item{remote_path}{DNA nexus file identifier or DNA nexus file/folder path
-(Syntax: "projectID:/folder/path", "/folder/path", or "folder/path").
-Paths are relative to the current working directory in the current project
-unless otherwise specified.}
+\item{metadata}{project metadata extracted by the \code{dx_get_project_metadata}
+function}
 
 \item{minimum_permissions}{minimum permissions user must have on the DNA nexus
-project. Must be one of "VIEW", "CONTRIBUTE" or "ADMINISITER".}
+project. Must be one of "VIEW", "CONTRIBUTE" or "ADMINISITER"}
 }
 \description{
 Error if the user does not has sufficient permissions for a given operation

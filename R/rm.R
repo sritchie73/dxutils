@@ -29,7 +29,7 @@
 #' @export
 dx_rm <- function(remote_path) {
   assert_dx_project_permissions(remote_path, "CONTRIBUTE")
-  if (dx_user_can_rm()) {
+  if (dx_user_can_rm(remote_path)) {
     system(sprintf("dx rm -rfa '%s'", remote_path))
   } else {
     project_id <- dx_get_project(remote_path)

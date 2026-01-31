@@ -1,53 +1,78 @@
-#' Get the unique identifier of a DNA nexus project
+#' Get the ID of the currently selected DNA nexus project
+#'
+#' @returns A string corresponding to a DNA nexus project identifier.
+dx_get_current_project <- function() {
+  id <- suppressWarnings(system("dx env | grep 'Current workspace\t' | cut -f 2 2>&1", intern=TRUE))
+  if (!is.null(attr(id, "status"))) stop(paste(id, collapse="\n"))
+  return(id)
+}
+
+#' Get the ID of the DNA nexus project associated with a remote path
 #'
 #' @inheritParams remote_path
 #'
-#' @details
-#' There are three ways the project identifier is determined:
-#' 1. If no `remote_path` is provided, then the ID of the current project is
-#'    returned.
-#' 2. If `remote_path` is provided, and includes a project identifier as part
-#'    of the path, returns the project identifier embedded in path.
-#' 3. If `remote_path` is provided without a project identifier, the ID of the
-#'    current project is returned
-#'
 #' @returns A string corresponding to a DNA nexus project identifier.
 dx_get_project <- function(remote_path) {
-  if (missing(remote_path) || !grepl(":", remote_path)) {
-    system("dx env | grep 'Current workspace\t' | cut -f 2", intern=TRUE)
+  if (dx_is_project_id(remote_path)) {
+    return(remote_path)
+  } else if (!grepl(":", remote_path)) {
+    return(dx_get_current_project())
   } else {
-    gsub(":.*", "", remote_path)
+    remote_path <- gsub(":.*", "", remote_path)
+    if (dx_is_project_id(remote_path)) {
+      return(remote_path)
+    } else {
+      metadata <- suppressWarnings(system(sprintf("dx describe '%s:' --json 2>&1", remote_path), intern=TRUE))
+      if (!is.null(attr(metadata, "status"))) {
+        if (grepl("dxpy.exceptions.DXCLIError", metadata)) {
+          stop("No project named '", remote_path, "' found on DNA nexus")
+        } else {
+          stop(paste(metadata, collapse="\n")) # Some other error, e.g. contacting servers
+        }
+      }
+      return(fromJSON(metadata)$id)
+    }
   }
 }
+
+#' Get the metadata associated with a DNA nexus project
+#'
+#' @inheritParams remote_path
+#'
+#' @returns a named list containing the project metadata obtained from the
+#'   output of `dx describe --json`
+#'
+#' @importFrom jsonlite fromJSON
+dx_get_project_metadata <- function(remote_path) {
+  # Get the project ID
+  project_id <- dx_get_project(remote_path)
+
+  # Get the metadata associated with the object at the remote_path:
+  metadata <- suppressWarnings(system(sprintf("dx describe '%s:' --json 2>&1", project_id), intern=TRUE))
+  if (!is.null(attr(metadata, "status"))) {
+    if (grepl("dxpy.exceptions.DXCLIError", metadata)) {
+      stop("No project named '", remote_path, "' found on DNA nexus")
+    } else {
+      stop(paste(metadata, collapse="\n")) # Some other error, e.g. contacting servers
+    }
+  }
+  return(fromJSON(metadata))
+}
+
 
 #' Determine access permissions of a DNA nexus project
 #'
 #' @inheritParams remote_path
-#' @importFrom jsonlite fromJSON
 #'
 #' @returns "NONE", "VIEW", "CONTRIBUTE", or "ADMINISTER", as an ordered factor.
-dx_get_project_permissions <- function(remote_path) {
-  project_id <- dx_get_project(remote_path)
-  ordered(
-    fromJSON(system(sprintf("dx describe '%s' --json", project_id), intern=TRUE))$level,
-    levels=c("NONE", "VIEW", "CONTRIBUTE", "ADMINISTER")
-  )
-}
-
-#' Determine whether a DNA nexus project has its Protected attribute set to true
-#'
-#' @inheritParams remote_path
-#'
-#' @details
-#' DNA nexus projects may be configured so that object deletion is restricted to
-#' administrators of the project.
 #'
 #' @importFrom jsonlite fromJSON
-#'
-#' @returns Logical; either TRUE or FALSE.
-dx_project_protected <- function(remote_path) {
-  project_id <- dx_get_project(remote_path)
-  fromJSON(system(sprintf("dx describe '%s' --json", project_id), intern=TRUE))$protected
+dx_get_project_permissions <- function(remote_path) {
+  metadata <- dx_get_project_metadata(remote_path)
+  ordered(
+    fromJSON(metadata)$level,
+    levels=c("NONE", "VIEW", "CONTRIBUTE", "ADMINISTER")
+  )
 }
 
 #' Checks whether the user can delete files on a DNA nexus project
@@ -61,8 +86,8 @@ dx_project_protected <- function(remote_path) {
 #'
 #' @returns Logical; either TRUE or FALSE.
 dx_user_can_rm <- function(remote_path) {
-  dx_get_project_permissions(remote_path) == "ADMINISTER" ||
-    (dx_get_project_permissions(remote_path) == "CONTRIBUTE" && !dx_project_protected(remote_path))
+  metadata <- dx_get_project_metadata(remote_path)
+  metadata$level == "ADMINISTER" || (metadata$level == "CONTRIBUTE" && !metadata$protected)
 }
 
 #' Error if the user does not has sufficient permissions for a given operation

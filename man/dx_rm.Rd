@@ -7,9 +7,9 @@
 dx_rm(remote_path)
 }
 \arguments{
-\item{remote_path}{path of an object or folder on DNA nexus project storage.
-Syntax: "projectID:/folder/path", "/folder/path", or "folder/path". Paths
-are relative to the current working directory in the current project
+\item{remote_path}{DNA nexus file identifier or DNA nexus file/folder path
+(Syntax: "projectID:/folder/path", "/folder/path", or "folder/path").
+Paths are relative to the current working directory in the current project
 unless otherwise specified.}
 }
 \description{

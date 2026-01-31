@@ -126,13 +126,16 @@ dx_download <- function(remote_path, local_path, exists="skip", missing="error",
         # Before doing so, we need to make sure any directories on the local
         # machine that need to exist are created
         if (grepl("/$", local_path)) {
-          system(sprintf("mkdir -p '%s'", local_path))
+          msg <- suppressWarnings(system(sprintf("mkdir -p '%s'", local_path), intern=TRUE))
+          if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n")) # e.g. permission denied on local machine
         } else {
-          system(sprintf("mkdir -p '%s'", dirname(local_path)))
+          msg <- suppressWarnings(system(sprintf("mkdir -p '%s'", dirname(local_path)), intern=TRUE))
+          if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n")) # e.g. permission denied on local machine
         }
 
         # Download the file
-        system(sprintf("dx download -f '%s' -o '%s'", remote_path, local_path))
+        msg <- suppressWarnings(system(sprintf("dx download -f '%s' -o '%s'", remote_path, local_path), intern=TRUE))
+        if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
       }
 
       # Determine path of the downloaded file to return as a string

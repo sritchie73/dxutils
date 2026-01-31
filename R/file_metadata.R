@@ -17,20 +17,20 @@ dx_get_metadata <- function(remote_path) {
   # Check if we can resolve the given remote_path to a location on DNA nexus
   exists <- suppressWarnings(system(sprintf("dx ls '%s' 2>&1", remote_path), intern=TRUE))
   if (!is.null(attr(exists, "status"))) {
-    if (grepl("dxpy.utils.resolver.ResolutionError", exists)) {
+    if (grepl("dxpy.utils.resolver.ResolutionError", exists[1])) {
       return("none") # File/folder not found
     } else {
-      stop(exists) # Some other error (e.g. permissions, connecting to server, etc.)
+      stop(paste(exists, collapse="\n")) # Some other error (e.g. permissions, connecting to server, etc.)
     }
   }
 
   # Get the metadata associated with the object at the remote_path:
   metadata <- suppressWarnings(system(sprintf("dx describe '%s' --json 2>&1", remote_path), intern=TRUE))
   if (!is.null(attr(metadata, "status"))) {
-    if (grepl("dxpy.exceptions.DXCLIError", metadata)) {
+    if (grepl("dxpy.exceptions.DXCLIError", metadata[1])) {
       return("folder") # no object to describe at path - i.e. must be a folder
     } else {
-      stop(metadata) # Some other error, e.g. contacting servers
+      stop(paste(metadata, collapse="\n")) # Some other error, e.g. contacting servers
     }
   }
 
@@ -50,7 +50,7 @@ dx_get_metadata <- function(remote_path) {
       # Remove file, do not error if the file doesn't exist (matching 'rm -f')
       msg <- suppressWarnings(system(sprintf("dx rm -rfa '%s' 2>&1", remote_path), intern=TRUE))
       if (!is.null(attr(msg, "status"))) {
-        if (!grepl("Could not resolve", msg)) {
+        if (!grepl("Could not resolve", msg[1])) {
           stop(paste(msg, collapse="\n"))
         }
       }
@@ -82,7 +82,7 @@ dx_type <- function(metadata) {
   if (is.null(names(metadata))) {
     return(metadata) # "none" or "folder"
   } else {
-    return(metadata$class)
+    return(metadata$class) # "file", "record", "applet", "database" etc.
   }
 }
 
@@ -102,7 +102,7 @@ dx_state <- function(metadata) {
   if (is.null(names(metadata))) {
     return(metadata) # "none" or "folder"
   } else {
-    return(metadata$state)
+    return(metadata$state) # "closed", "closing", or "open"
   }
 }
 
@@ -145,6 +145,11 @@ dx_exists <- function(remote_path, incomplete=TRUE) {
 #'
 #' @export
 assert_dx_exists <- function(remote_path, incomplete=TRUE) {
+  stopifnot(length(remote_path) == 1)
+  stopifnot(length(incomplete) == 1 && incomplete %in% c(TRUE, FALSE))
+
+  # Just a wrapper over 'dx_exists()' that gives a more informative error
+  # message depending on how the user has provided the remote_path.
   if (!dx_exists(remote_path, incomplete)) {
     if (grepl(":", remote_path) || dx_is_id(remote_path)) {
       stop("'", remote_path, "' not found on DNA nexus")

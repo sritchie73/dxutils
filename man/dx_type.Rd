@@ -4,13 +4,17 @@
 \alias{dx_type}
 \title{Determine the type of entity at a location on a DNA nexus project}
 \usage{
-dx_type(remote_path)
+dx_type(remote_path, from_metadata = FALSE)
 }
 \arguments{
 \item{remote_path}{DNA nexus file identifier or DNA nexus file/folder path
 (Syntax: "projectID:/folder/path", "/folder/path", or "folder/path").
 Paths are relative to the current working directory in the current project
 unless otherwise specified.}
+
+\item{from_metadata}{logical; if TRUE, assumes the \code{remote_path} actually
+contains the metadata associated with that location extracted by
+\code{\link[=dx_get_metadata]{dx_get_metadata()}}}
 }
 \value{
 "none" if nothing exists at the 'remote_path' provided, "folder" if

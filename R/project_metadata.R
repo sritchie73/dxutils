@@ -7,34 +7,6 @@ dx_get_current_project <- function() {
   return(id)
 }
 
-#' Get the ID of the DNA nexus project associated with a remote path
-#'
-#' @inheritParams remote_path
-#'
-#' @returns A string corresponding to a DNA nexus project identifier.
-dx_get_project <- function(remote_path) {
-  if (dx_is_project_id(remote_path)) {
-    return(remote_path)
-  } else if (!grepl(":", remote_path)) {
-    return(dx_get_current_project())
-  } else {
-    remote_path <- gsub(":.*", "", remote_path)
-    if (dx_is_project_id(remote_path)) {
-      return(remote_path)
-    } else {
-      metadata <- suppressWarnings(system(sprintf("dx describe '%s:' --json 2>&1", remote_path), intern=TRUE))
-      if (!is.null(attr(metadata, "status"))) {
-        if (grepl("dxpy.exceptions.DXCLIError", metadata)) {
-          stop("No project named '", remote_path, "' found on DNA nexus")
-        } else {
-          stop(paste(metadata, collapse="\n")) # Some other error, e.g. contacting servers
-        }
-      }
-      return(fromJSON(metadata)$id)
-    }
-  }
-}
-
 #' Get the metadata associated with a DNA nexus project
 #'
 #' @inheritParams remote_path
@@ -44,10 +16,16 @@ dx_get_project <- function(remote_path) {
 #'
 #' @importFrom jsonlite fromJSON
 dx_get_project_metadata <- function(remote_path) {
-  # Get the project ID
-  project_id <- dx_get_project(remote_path)
+  # Determine the ID or name of the project associated with the remote path
+  if (dx_is_project_id(remote_path)) {
+    project_id <- remote_path
+  } else if (!grepl(":", remote_path)) {
+    project_id <- dx_get_current_project()
+  } else {
+    project_id <- gsub(":.*", "", remote_path)
+  }
 
-  # Get the metadata associated with the object at the remote_path:
+  # Get the metadata associated with the project
   metadata <- suppressWarnings(system(sprintf("dx describe '%s:' --json 2>&1", project_id), intern=TRUE))
   if (!is.null(attr(metadata, "status"))) {
     if (grepl("dxpy.exceptions.DXCLIError", metadata)) {
@@ -59,16 +37,20 @@ dx_get_project_metadata <- function(remote_path) {
   return(fromJSON(metadata))
 }
 
-
 #' Determine access permissions of a DNA nexus project
 #'
 #' @inheritParams remote_path
+#' @inheritParams from_metadata
 #'
 #' @returns "NONE", "VIEW", "CONTRIBUTE", or "ADMINISTER", as an ordered factor.
 #'
 #' @importFrom jsonlite fromJSON
-dx_get_project_permissions <- function(remote_path) {
-  metadata <- dx_get_project_metadata(remote_path)
+dx_get_project_permissions <- function(remote_path, from_metadata=FALSE) {
+  if (from_metadata) {
+    metadata <- remote_path
+  } else {
+    metadata <- dx_get_project_metadata(remote_path)
+  }
   ordered(
     fromJSON(metadata)$level,
     levels=c("NONE", "VIEW", "CONTRIBUTE", "ADMINISTER")
@@ -78,6 +60,7 @@ dx_get_project_permissions <- function(remote_path) {
 #' Checks whether the user can delete files on a DNA nexus project
 #'
 #' @inheritParams remote_path
+#' @inheritParams from_metadata
 #'
 #' @details
 #' Returns TRUE if the user has at least "CONTRIBUTE" permissions, or if the
@@ -85,8 +68,12 @@ dx_get_project_permissions <- function(remote_path) {
 #' permissions.
 #'
 #' @returns Logical; either TRUE or FALSE.
-dx_user_can_rm <- function(remote_path) {
-  metadata <- dx_get_project_metadata(remote_path)
+dx_user_can_rm <- function(remote_path, from_metadata=FALSE) {
+  if (from_metadata) {
+    metadata <- remote_path
+  } else {
+    metadata <- dx_get_project_metadata(remote_path)
+  }
   metadata$level == "ADMINISTER" || (metadata$level == "CONTRIBUTE" && !metadata$protected)
 }
 
@@ -102,10 +89,11 @@ assert_dx_project_permissions <- function(remote_path, minimum_permissions) {
   if (!(minimum_permissions %in% valid_permissions)) {
     stop("'minimum_permissions' must be one of \"VIEW\", \"CONTRIBUTE\" or \"ADMINISITER\"")
   }
-  user_permissions <- dx_get_project_permissions(remote_path)
+  metadata <- dx_get_project_metadata(remote_path)
+  user_permissions <- dx_get_project_permissions(metadata, from_metadata=TRUE)
   if (user_permissions < minimum_permissions) {
-    project_id <- dx_get_project(remote_path)
-    stop("Unable to modify files in project ", project_id, ": user permissions are ",
-         user_permissions, ", at least ",  minimum_permissions, "required")
+    stop("Unable to modify files in project ", metadata$id,
+         ": user permissions are ", user_permissions, ", at least ",
+         minimum_permissions, "required")
   }
 }

@@ -1,22 +1,3 @@
-#' @details # File states on DNA nexus
-#' Files on DNA nexus can be in three possible states: "closed", "closing", or
-#' "open". Files in the "closed" state are those that are complete and not being
-#' actively written to by `dx upload`. Files in the "closing" state are those
-#' where `dx upload` has finished, and DNA nexus is now finalizing the file.
-#' Files in the "open" state are those that are being actively written to by a
-#' `dx upload` process, or where a `dx upload` process was killed part way
-#' through an upload, e.g. when a low-priority job is interrupted and restarted
-#' by AWS.
-#'
-#' To help distinguish between these scenarios and to facilitate checkpointing,
-#' the [dx_upload()] function attaches the job ID to the each file as a property
-#' named 'uploaded_by' if run from a DNA nexus job (e.g. from a remote cloud
-#' workstation) so that restarted jobs can identify files which were interrupted
-#' mid-upload and remove them when next queried.
-#'
-#' @name file_states
-NULL
-
 #' Get the metadata associated with a location on DNA nexus
 #'
 #' If the location resolves to a file that is in the "open" state, removes that
@@ -91,14 +72,18 @@ dx_get_metadata <- function(remote_path) {
 #' Determine the type of entity at a location on a DNA nexus project
 #'
 #' @inheritParams remote_path
+#' @inheritParams from_metadata
 #'
 #' @returns "none" if nothing exists at the 'remote_path' provided, "folder" if
 #'  the 'remote_path' points to a folder, or the Class attribute (e.g. "file")
 #'  if the 'remote_path' points to a DNA nexus object.
-#'
-dx_type <- function(remote_path) {
+dx_type <- function(remote_path, from_metadata=FALSE) {
   # Get metadata associated with location on DNA nexus
-  metadata <- dx_get_metadata(remote_path)
+  if (from_metadata) {
+    metadata <- remote_path
+  } else {
+    metadata <- dx_get_metadata(remote_path)
+  }
 
   # Extract relevant information
   if (is.null(names(metadata))) {
@@ -113,15 +98,20 @@ dx_type <- function(remote_path) {
 #' @inherit file_states
 #'
 #' @inheritParams remote_path
+#' @inheritParams from_metadata
 #'
 #' @returns "none" if the file does not exist (or has been deleted; see Details),
 #'   "folder" if the location points to a folder, or one of "closed",
 #'   "closing", or "open" (see Details).
 #'
 #' @importFrom jsonlite fromJSON
-dx_state <- function(remote_path) {
+dx_state <- function(remote_path, from_metadata=FALSE) {
   # Get metadata associated with location on DNA nexus
-  metadata <- dx_get_metadata(remote_path)
+  if (from_metadata) {
+    metadata <- remote_path
+  } else {
+    metadata <- dx_get_metadata(remote_path)
+  }
 
   # Extract relevant information
   if (is.null(names(metadata))) {

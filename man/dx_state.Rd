@@ -4,13 +4,17 @@
 \alias{dx_state}
 \title{Get the state of a file (or other data object) on DNA nexus}
 \usage{
-dx_state(remote_path)
+dx_state(remote_path, from_metadata = FALSE)
 }
 \arguments{
 \item{remote_path}{DNA nexus file identifier or DNA nexus file/folder path
 (Syntax: "projectID:/folder/path", "/folder/path", or "folder/path").
 Paths are relative to the current working directory in the current project
 unless otherwise specified.}
+
+\item{from_metadata}{logical; if TRUE, assumes the \code{remote_path} actually
+contains the metadata associated with that location extracted by
+\code{\link[=dx_get_metadata]{dx_get_metadata()}}}
 }
 \value{
 "none" if the file does not exist (or has been deleted; see Details),

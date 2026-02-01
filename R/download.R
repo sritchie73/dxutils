@@ -306,20 +306,20 @@ dx_clone_tree <- function(remote_path, local_path, remote_subdir) {
   # Create the remote directory at the current depth of the remote tree in the
   # respective location on the local path
   if (missing(remote_subdir)) {
-    msg <- suppressWarnings(system(sprintf("mkdir -p '%s/%s'", local_path, basename(remote_path)), intern=TRUE))
-    if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
-  } else {
-    msg <- suppressWarnings(system(sprintf("mkdir -p '%s/%s/%s'", local_path, basename(remote_path), remote_subdir), intern=TRUE))
-    if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
-  }
-
-  # Apply unix rules based on whether remote_path ends in a /
-  if (missing(remote_subdir) && grepl("/$", remote_path)) {
-    if (length(list.dirs(sprintf("%s/%s", local_path, basename(remote_path)), recursive=FALSE)) > 0) {
-      msg <- suppressWarnings(system(sprintf("mv '%s/%s/'* '%s'", local_path, basename(remote_path), local_path), intern=TRUE))
+    if (grepl("/$", remote_path)) {
+      msg <- suppressWarnings(system(sprintf("mkdir -p '%s'", local_path), intern=TRUE))
+      if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
+    } else {
+      msg <- suppressWarnings(system(sprintf("mkdir -p '%s/%s'", local_path, basename(remote_path)), intern=TRUE))
       if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
     }
-    msg <- suppressWarnings(system(sprintf("rmdir '%s/%s'", local_path, basename(remote_path)), intern=TRUE))
-    if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
+  } else {
+    if (grepl("/$", remote_path)) {
+      msg <- suppressWarnings(system(sprintf("mkdir -p '%s/%s'", local_path, remote_subdir), intern=TRUE))
+      if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
+    } else {
+      msg <- suppressWarnings(system(sprintf("mkdir -p '%s/%s/%s'", local_path, basename(remote_path), remote_subdir), intern=TRUE))
+      if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
+    }
   }
 }

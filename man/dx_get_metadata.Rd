@@ -13,8 +13,9 @@ Paths are relative to the current working directory in the current project
 unless otherwise specified.}
 }
 \value{
-"none" if nothing exists at that location, "folder" if the location
-resolves to a folder on a DNA nexus project, or a named list containing the
+"none" if nothing exists at that location, a named list containing
+basic information about the folder (folder name, parent folder, and project)
+if the location resolves to a folder, or a named list containing the
 object metadata obtained from the output of \verb{dx describe --json}
 }
 \description{

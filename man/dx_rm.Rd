@@ -4,13 +4,16 @@
 \alias{dx_rm}
 \title{Delete an object or folder on a DNA nexus project}
 \usage{
-dx_rm(remote_path)
+dx_rm(remote_path, not_exists = "ignore")
 }
 \arguments{
 \item{remote_path}{DNA nexus file identifier or DNA nexus file/folder path
 (Syntax: "projectID:/folder/path", "/folder/path", or "folder/path").
 Paths are relative to the current working directory in the current project
 unless otherwise specified.}
+
+\item{not_exists}{action to take if the location being removed does not
+exist, either "ignore" or "error".}
 }
 \description{
 Deletes a file or recursively deletes a folder at the given path on a DNA

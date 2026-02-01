@@ -1,29 +1,14 @@
-#' Get the ID of the currently selected DNA nexus project
-#'
-#' @returns A string corresponding to a DNA nexus project identifier.
-dx_get_current_project <- function() {
-  id <- suppressWarnings(system("dx env | grep 'Current workspace\t' | cut -f 2 2>&1", intern=TRUE))
-  if (!is.null(attr(id, "status"))) stop(paste(id, collapse="\n"))
-  return(id)
-}
-
 #' Get the metadata associated with a DNA nexus project
 #'
-#' @inheritParams remote_path
+#' @inheritParams normalized_remote_path
 #'
 #' @returns a named list containing the project metadata obtained from the
 #'   output of `dx describe --json`
 #'
 #' @importFrom jsonlite fromJSON
-dx_get_project_metadata <- function(remote_path) {
+dx_get_project_metadata <- function(normalized_remote_path) {
   # Determine the ID or name of the project associated with the remote path
-  if (dx_is_project_id(remote_path)) {
-    project_id <- remote_path
-  } else if (!grepl(":", remote_path)) {
-    project_id <- dx_get_current_project()
-  } else {
-    project_id <- gsub(":.*", "", remote_path)
-  }
+  project_id <- dx_extract_project_id(normalized_remote_path)
 
   # Get the metadata associated with the project
   metadata <- suppressWarnings(system(sprintf("dx describe '%s:' --json 2>&1", project_id), intern=TRUE))
@@ -35,16 +20,6 @@ dx_get_project_metadata <- function(remote_path) {
     }
   }
   return(fromJSON(metadata))
-}
-
-#' Get the unique ID of a DNA nexus project
-#'
-#' @param metadata project metadata extracted by the `dx_get_project_metadata`
-#'   function
-#'
-#' @returns an DNA nexus project ID
-dx_get_project_id <- function(metadata) {
-  metadata$id
 }
 
 #' Determine access permissions of a DNA nexus project

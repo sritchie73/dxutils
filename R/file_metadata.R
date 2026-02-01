@@ -1,3 +1,22 @@
+#' @details # File states on DNA nexus
+#' Files on DNA nexus can be in three possible states: "closed", "closing", or
+#' "open". Files in the "closed" state are those that are complete and not being
+#' actively written to by `dx upload`. Files in the "closing" state are those
+#' where `dx upload` has finished, and DNA nexus is now finalizing the file.
+#' Files in the "open" state are those that are being actively written to by a
+#' `dx upload` process, or where a `dx upload` process was killed part way
+#' through an upload, e.g. when a low-priority job is interrupted and restarted
+#' by AWS.
+#'
+#' To help distinguish between these scenarios and to facilitate checkpointing,
+#' the [dx_upload()] function attaches the job ID to the each file as a property
+#' named 'uploaded_by' if run from a DNA nexus job (e.g. from a remote cloud
+#' workstation) so that restarted jobs can identify files which were interrupted
+#' mid-upload and remove them when next queried.
+#'
+#' @name file_states
+NULL
+
 #' Get the metadata associated with a location on DNA nexus
 #'
 #' If the location resolves to a file that is in the "open" state, removes that
@@ -8,8 +27,9 @@
 #'
 #' @inheritParams remote_path
 #'
-#' @returns "none" if nothing exists at that location, "folder" if the location
-#'   resolves to a folder on a DNA nexus project, or a named list containing the
+#' @returns "none" if nothing exists at that location, a named list containing
+#'   basic information about the folder (folder name, parent folder, and project)
+#'   if the location resolves to a folder, or a named list containing the
 #'   object metadata obtained from the output of `dx describe --json`
 #'
 #' @importFrom jsonlite fromJSON
@@ -28,7 +48,8 @@ dx_get_metadata <- function(remote_path) {
   metadata <- suppressWarnings(system(sprintf("dx describe '%s' --json 2>&1", remote_path), intern=TRUE))
   if (!is.null(attr(metadata, "status"))) {
     if (grepl("dxpy.exceptions.DXCLIError", metadata[1])) {
-      return("folder") # no object to describe at path - i.e. must be a folder
+      # no object to describe at path - i.e. must be a folder
+      return(c(dx_normalize_path(remote_path, return_as_parts=TRUE), class="folder"))
     } else {
       stop(paste(metadata, collapse="\n")) # Some other error, e.g. contacting servers
     }
@@ -69,7 +90,7 @@ dx_get_metadata <- function(remote_path) {
   return(metadata)
 }
 
-#' Determine the type of entity at a location on a DNA nexus project
+#' Determine the type of entity at a location on a DNA nexus project from metadata
 #'
 #' @param metadata file metadata extracted by the internal `dx_get_metadata`
 #'    function
@@ -80,13 +101,13 @@ dx_get_metadata <- function(remote_path) {
 dx_type <- function(metadata) {
   # Extract relevant information
   if (is.null(names(metadata))) {
-    return(metadata) # "none" or "folder"
+    return(metadata) # "none"
   } else {
-    return(metadata$class) # "file", "record", "applet", "database" etc.
+    return(metadata$class) # "folder", file", "record", "applet", "database" etc.
   }
 }
 
-#' Get the state of a file (or other data object) on DNA nexus
+#' Get the state of a file (or other data object) on DNA nexus from metadata
 #'
 #' @inherit file_states details
 #'
@@ -99,11 +120,27 @@ dx_type <- function(metadata) {
 #' @importFrom jsonlite fromJSON
 dx_state <- function(metadata) {
   # Extract relevant information
-  if (is.null(names(metadata))) {
-    return(metadata) # "none" or "folder"
+  type <- dx_type(metadata)
+  if (type %in% c("none", "folder")) {
+    return(type)
   } else {
     return(metadata$state) # "closed", "closing", or "open"
   }
+}
+
+#' Get the path of a file (or other data object) on DNA nexus from metadata
+#'
+#' @param metadata file metadata extracted by the internal `dx_get_metadata`
+#'    function
+#'
+#' @returns a DNA nexus path with syntax 'project-ID:/path/to/file.ext'
+dx_path_from_metadata <- function(metadata) {
+  if (metadata$folder == "/") {
+    fmt <- "%s:%s%s"
+  } else {
+    fmt <- "%s:%s/%s"
+  }
+  sprintf(fmt, metadata$project, metadata$folder, metadata$name)
 }
 
 #' Check whether a file or folder exists on a DNA nexus project

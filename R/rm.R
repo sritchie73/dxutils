@@ -23,16 +23,26 @@
 #' same name.
 #'
 #' @inheritParams remote_path
+#' @param not_exists action to take if the location being removed does not
+#'   exist, either "ignore" or "error".
 #'
 #' @returns NULL
 #'
 #' @export
-dx_rm <- function(remote_path) {
+dx_rm <- function(remote_path, not_exists="ignore") {
   stopifnot(length(remote_path) == 1)
+  stopifnot(length(not_exists) == 1 && not_exists %in% c("ignore", "error"))
 
   # Poll server to get information about the project associated with the
   # user-provided remote_path
-  project_metadata <- dx_get_project_metadata(remote_path)
+  if (dx_is_data_id(remote_path)) {
+    entity_metadata <- dx_get_metadata(remote_path)
+    normalized_remote_path <- dx_path_from_metadata(entity_metadata)
+  } else {
+    normalized_remote_path <- dx_normalize_path(remote_path)
+  }
+  project_id <- dx_extract_project_id(normalized_remote_path)
+  project_metadata <- dx_get_project_metadata(normalized_remote_path)
 
   # Check we have permissions to delete (or at least move) files in this
   # project
@@ -44,18 +54,23 @@ dx_rm <- function(remote_path) {
     # Remove file, do not error if the file doesn't exist (matching 'rm -f')
     msg <- suppressWarnings(system(sprintf("dx rm -rfa '%s' 2>&1", remote_path), intern=TRUE))
     if (!is.null(attr(msg, "status"))) {
-      if (!grepl("Could not resolve", msg[1])) {
+      if (grepl("Could not resolve", msg[1])) {
+        if (not_exists == "error") stop(remote_path, " not found on DNA nexus")
+      } else {
         stop(paste(msg, collapse="\n"))
       }
     }
   } else {
     # Set up a trash/ folder in the project if needed
-    project_id <- dx_get_project_id(project_metadata)
     msg <- suppressWarnings(system(sprintf("dx mkdir -p %s:trash 2>&1", project_id), intern=TRUE))
     if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n")) # Something has gone wrong, we should be able to 'dx mv'
 
+    # Extract information about the remote location if we haven't already
+    if (!exists('entity_metadata')) {
+      entity_metadata <- dx_get_metadata(remote_path)
+    }
+
     # Are we dealing with a file or a folder?
-    entity_metadata <- dx_get_metadata(remote_path)
     if (dx_type(entity_metadata) == "folder") {
       # Unlike files, we can't have multiple folders with the same name in one
       # location, so to prevent conflicts in trash/ we attached the date and
@@ -69,7 +84,7 @@ dx_rm <- function(remote_path) {
       # Multiple files with the same name can exist in one location on DNA nexus
       # by design - as they are distinguished by file ID not name. So we can
       # just move any file to trash/ without needing to rename
-      msg <- suppressWarnings(system(sprintf("dx mv '%s' %s:trash/ 2>&1", remote_path, metadata$project), intern=TRUE))
+      msg <- suppressWarnings(system(sprintf("dx mv '%s' %s:trash/ 2>&1", remote_path, entity_metadata$project), intern=TRUE))
       if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
     }
   }

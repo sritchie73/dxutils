@@ -4,13 +4,12 @@
 \alias{dx_get_project_metadata}
 \title{Get the metadata associated with a DNA nexus project}
 \usage{
-dx_get_project_metadata(remote_path)
+dx_get_project_metadata(normalized_remote_path)
 }
 \arguments{
-\item{remote_path}{DNA nexus file identifier or DNA nexus file/folder path
-(Syntax: "projectID:/folder/path", "/folder/path", or "folder/path").
-Paths are relative to the current working directory in the current project
-unless otherwise specified.}
+\item{normalized_remote_path}{DNA nexus file or folder path that has been
+processed by the \code{dx_normalize_path} function and now has the syntax
+"projectID:/folder/path"}
 }
 \value{
 a named list containing the project metadata obtained from the

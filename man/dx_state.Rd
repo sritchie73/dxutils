@@ -2,7 +2,7 @@
 % Please edit documentation in R/file_metadata.R
 \name{dx_state}
 \alias{dx_state}
-\title{Get the state of a file (or other data object) on DNA nexus}
+\title{Get the state of a file (or other data object) on DNA nexus from metadata}
 \usage{
 dx_state(metadata)
 }
@@ -15,5 +15,5 @@ dx_state(metadata)
 "closing", or "open" (see Details).
 }
 \description{
-Get the state of a file (or other data object) on DNA nexus
+Get the state of a file (or other data object) on DNA nexus from metadata
 }

@@ -66,7 +66,7 @@ dx_download <- function(remote_path, local_path, exists="skip", missing="error",
         return(NULL)
       } else if (missing == "wait") {
         cat(remote_path, "does not exist yet, waiting 10s...\n")
-        sleep(10)
+        Sys.sleep(10)
         next
       }
     } else if (entity_type != "folder") {
@@ -82,8 +82,8 @@ dx_download <- function(remote_path, local_path, exists="skip", missing="error",
         } else if (incomplete == "skip") {
           return(NULL)
         } else if (incomplete == "wait") {
-          cat(remote_path, " is an incomplete file, waiting 10s for upload to finish and trying again...\n")
-          sleep(10)
+          cat(remote_path, " is an incomplete file, waiting 10s for upload to finish before trying again...\n")
+          Sys.sleep(10)
           next
         }
       }
@@ -91,8 +91,8 @@ dx_download <- function(remote_path, local_path, exists="skip", missing="error",
       # If the file is in the 'closing' state, always wait for DNA nexus to
       # finish finalizing the file before downloading
       if (file_state == "closing") {
-        cat(remote_path, "is in the process of finalizing, waiting 10s and trying again...\n")
-        sleep(10)
+        cat(remote_path, "is in the process of closing, waiting 10s for DNA nexus to finalize the file before trying again...\n")
+        Sys.sleep(10)
         next
       }
 
@@ -126,15 +126,15 @@ dx_download <- function(remote_path, local_path, exists="skip", missing="error",
         # Before doing so, we need to make sure any directories on the local
         # machine that need to exist are created
         if (grepl("/$", local_path)) {
-          msg <- suppressWarnings(system(sprintf("mkdir -p '%s'", local_path), intern=TRUE))
+          msg <- suppressWarnings(system(sprintf("mkdir -p '%s' 2>&1", local_path), intern=TRUE))
           if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n")) # e.g. permission denied on local machine
         } else {
-          msg <- suppressWarnings(system(sprintf("mkdir -p '%s'", dirname(local_path)), intern=TRUE))
+          msg <- suppressWarnings(system(sprintf("mkdir -p '%s' 2>&1", dirname(local_path)), intern=TRUE))
           if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n")) # e.g. permission denied on local machine
         }
 
         # Download the file
-        msg <- suppressWarnings(system(sprintf("dx download -f '%s' -o '%s'", remote_path, local_path), intern=TRUE))
+        msg <- suppressWarnings(system(sprintf("dx download -f '%s' -o '%s' 2>&1", remote_path, local_path), intern=TRUE))
         if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
       }
 

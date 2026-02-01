@@ -64,7 +64,7 @@ assert_dx_project_permissions <- function(metadata, minimum_permissions) {
   }
   user_permissions <- dx_get_project_permissions(metadata)
   if (user_permissions < minimum_permissions) {
-    stop("Unable to modify files in project ", dx_get_project_id(metadata),
+    stop("Insufficient privileges for operation in project ", metadata$id,
          ": user permissions are ", user_permissions, ", at least ",
          minimum_permissions, "required")
   }

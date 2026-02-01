@@ -230,7 +230,7 @@ dx_download <- function(remote_path, local_path, exists="skip", missing="error",
           files_exist_remote <- sprintf("%s:%s/%s",  files_exist$describe$project,
             files_exist$describe$folder, files_exist$describe$name)
 
-          stop(length(files_exists), " files from ", remote_path,
+          stop(length(files_exist), " files from ", remote_path,
             " already exist on the local machine at ", gsub("/$", "", local_path),
             "/:", paste(paste(files_exist_remote, files_exist$local_path), collapse="\n"))
 

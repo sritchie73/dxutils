@@ -12,13 +12,8 @@ dx_get_project_metadata <- function(normalized_remote_path) {
 
   # Get the metadata associated with the project
   metadata <- suppressWarnings(system(sprintf("dx describe '%s:' --json 2>&1", project_id), intern=TRUE))
-  if (!is.null(attr(metadata, "status"))) {
-    if (grepl("dxpy.exceptions.DXCLIError", metadata[1])) {
-      stop("No project named '", remote_path, "' found on DNA nexus")
-    } else {
-      stop(paste(metadata, collapse="\n")) # Some other error, e.g. contacting servers
-    }
-  }
+  if (!is.null(attr(metadata, "status"))) stop(paste(metadata, collapse="\n")) # Some other error, e.g. contacting servers
+
   return(fromJSON(metadata))
 }
 

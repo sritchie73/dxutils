@@ -19,6 +19,8 @@ NULL
 #' project name
 #'
 #' @return a DNA nexus path with syntax 'project-ID:/path/to/folder'
+#'
+#' @importFrom utils read.table
 dx_getwd <- function() {
   env <- suppressWarnings(system("dx env | sed 's/\t\t/\t/'" , intern=TRUE))
   if (!is.null(attr(env, "status"))) stop(paste(env, collapse="\n"))

@@ -4,7 +4,7 @@
 \alias{dx_upload}
 \title{Upload a file or folder to a DNAnexus project}
 \usage{
-dx_upload(local_path, remote_path, exists = "replace")
+dx_upload(local_path, remote_path, exists = "replace", silent = FALSE)
 }
 \arguments{
 \item{local_path}{path of the file or folder on the local machine to upload.}
@@ -16,6 +16,9 @@ unless otherwise specified.}
 
 \item{exists}{action to take if the file being uploaded already exists on
 DNAnexus. One of "error", "replace" (default), or "skip".}
+
+\item{silent}{logical; if TRUE does not print message on completion of each
+file upload.}
 }
 \description{
 Extends the \verb{dx upload} command line tool to enable recursive upload of

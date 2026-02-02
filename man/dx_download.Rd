@@ -2,7 +2,7 @@
 % Please edit documentation in R/download.R
 \name{dx_download}
 \alias{dx_download}
-\title{Download a file or folder from a DNAnexus project}
+\title{Download a file or folder from a DNA nexus project}
 \usage{
 dx_download(
   remote_path,

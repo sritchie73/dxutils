@@ -92,10 +92,16 @@ dx_download <- function(remote_path, local_path=".", exists="skip", missing="err
 
       # File is ok to download, now check the target local_path to make sure
       # we're not overwriting an existing file unless intended
-      local_path_exists <- file.exists(local_path)
-      if (local_path_exists && dir.exists(local_path)) {
-        local_path_exists <- file.exists(file.path(local_path, metadata$name))
+      if (dir.exists(local_path) || grepl("/$", local_path))  {
+        if (local_path == ".") {
+          local_path <- metadata$name
+        } else if (grepl("/$", local_path)) {
+          local_path <- sprintf("%s%s", local_path, metadata$name)
+        } else {
+          local_path <- sprintf("%s/%s", local_path, metadata$name)
+        }
       }
+      local_path_exists <- file.exists(local_path)
 
       if (local_path_exists) {
         if (exists == "error") {
@@ -108,7 +114,11 @@ dx_download <- function(remote_path, local_path=".", exists="skip", missing="err
             stop("Error downloading ", remote_path, ": ", metadata$name, " already exists on local machine at ", local_path)
           } else {
             # 'local_path' points to a file with a different name to the remote file
-            stop("Error downloading ", remote_path, ": file already exists at target location ", local_path)
+            stop("Error downloading ", remote_path, ": file already exists on local machine at ", local_path)
+          }
+        } else if (exists == "skip") {
+          if (!silent) {
+            cat(local_path, "already exists on local machine, skipping download of", dx_path_from_metadata(metadata), "\n")
           }
         }
       }
@@ -130,6 +140,11 @@ dx_download <- function(remote_path, local_path=".", exists="skip", missing="err
         # Download the file
         msg <- suppressWarnings(system(sprintf("dx download -f '%s' -o '%s' 2>&1", remote_path, local_path), intern=TRUE))
         if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
+
+        # Print out success message
+        if (!silent) {
+          cat(dx_path_from_metadata(metadata), "on DNAnexus downloaded to local machine at", local_path, "\n")
+        }
       }
 
       # Determine path of the downloaded file to return as a string
@@ -216,6 +231,13 @@ dx_download <- function(remote_path, local_path=".", exists="skip", missing="err
         remote_root <- "^/"
       }
 
+      # Get the absolute remote path of each file
+      file_list_metadata$remote_path <- paste0(
+        file_list_metadata$project, ":",
+        gsub("^/$", "", file_list_metadata$describe$folder), "/",
+        file_list_metadata$describe$name
+      )
+
       file_list_metadata$local_path <- paste0(
         gsub("/$", "", local_path), "/",
         gsub(remote_root, "", file_list_metadata$describe$folder),
@@ -227,16 +249,19 @@ dx_download <- function(remote_path, local_path=".", exists="skip", missing="err
       file_list_metadata$exists <- file.exists(file_list_metadata$local_path)
 
       if (any(file_list_metadata$exists)) {
+        files_exist <- file_list_metadata[file_list_metadata$exists, ]
+        files_exist_remote <- sprintf("%s:%s/%s", files_exist$describe$project,
+                                      files_exist$describe$folder, files_exist$describe$name)
         if (exists == "error") {
-          files_exist <- file_list_metadata[file_list_metadata$exists, ]
-          files_exist_remote <- sprintf("%s:%s/%s",  files_exist$describe$project,
-            files_exist$describe$folder, files_exist$describe$name)
-
           stop(length(files_exist), " files from ", remote_path,
             " already exist on the local machine at ", gsub("/$", "", local_path),
             "/:", paste(paste(files_exist_remote, files_exist$local_path), collapse="\n"))
 
         } else if (exists == "skip") {
+          cat(paste(paste(files_exist_remote,
+            "on DNAnexus skipped as a file on the local machine already exists at",
+            files_exist$local_path), collapse="\n"), "\n")
+
           file_list_metadata <- file_list_metadata[!file_list_metadata$exists,]
         }
       }
@@ -249,9 +274,16 @@ dx_download <- function(remote_path, local_path=".", exists="skip", missing="err
       for (ii in seq_len(nrow(file_list_metadata))) {
         msg <- suppressWarnings(system(sprintf(
             "dx download -f '%s' -o '%s' 2>&1",
-            file_list_metadata$id[ii], file_list_metadata$local_path[ii]
+            file_list_metadata$remote_path[ii], file_list_metadata$local_path[ii]
           ), intern=TRUE))
         if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
+
+        # Print out success message
+        if (!silent) {
+          cat(file_list_metadata$remote_path[ii],
+            "on DNAnexus downloaded to local machine at",
+            file_list_metadata$local_path[ii], "\n")
+        }
       }
 
       # Return the local_path

@@ -62,7 +62,10 @@ dx_normalize_path <- function(remote_path, return_as_parts=FALSE) {
   # folder containing the remote folder). The only time we can't take this
   # approach is when the remote_path is "project-ID:/" or "project-ID:" as then
   # dirname() will return "." instead of "/".
-  if (grepl("(:/$)|(:$)", remote_path)) {
+  if (grepl(":", remote_path) && !grepl("(:/$)|(:$)", remote_path)) {
+    remote_path <- gsub(":", ":/", remote_path)
+  }
+  if (grepl("(:$)|(/$)", remote_path)) {
     dirname <- remote_path
     basename <- ""
   } else {
@@ -72,7 +75,7 @@ dx_normalize_path <- function(remote_path, return_as_parts=FALSE) {
 
   # We only need to 'dx cd' if the dirname doesn't resolve to "." in which
   # case the remote path points to a file or folder in the current working
-  # directory
+  # directory.
   if (dirname != ".") {
     # What is the current working directory?
     working_dir <- dx_getwd()
@@ -84,38 +87,57 @@ dx_normalize_path <- function(remote_path, return_as_parts=FALSE) {
       if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
     })
 
-    # Change the current working directory (and potentially project) on DNAnexus
-    # to the parent folder of remote_path
-    msg <- suppressWarnings(system(sprintf("dx cd '%s' 2>&1", dirname), intern=TRUE))
-    if (!is.null(attr(msg, "status"))) {
-      if (grepl("Folder .* does not exist in project", msg[1])) {
-        stop("Could not find folder ", dirname, " on DNAnexus")
-      } else {
-        stop(paste(msg, collapse="\n"))
+    # Enter a while loop, in case we're in a nested folder path that doesn't yet
+    # exist, so that we can keep trying higher and higher in the tree
+    while (TRUE) {
+      # Try to change the current working directory to the parent folder of the
+      # remote_path on DNAnexus
+      msg <- suppressWarnings(system(sprintf("dx cd '%s' 2>&1", dirname), intern=TRUE))
+      if (!is.null(attr(msg, "status"))) {
+        if (grepl("Folder .* does not exist in project", msg[1])) {
+          # If the parent folder does not exist, try the parent of the parent
+          # folder and so on
+          basename <- sprintf("%s/%s", basename(dirname), basename)
+          dirname <- dirname(dirname)
+          next
+        } else {
+          # Some other error, e.g. permissions, can't contact DNAnexus servers
+          stop(paste(msg, collapse="\n"))
+        }
       }
+
+      # We have successfully changed working directory to the target location, so
+      # we can exit the while loop
+      break
     }
   }
 
-  # Get the absolute path format of the parent folder of 'remote_path'
+  # Get the absolute path format of the remote_path
   dirname <- dx_getwd()
+  if (basename == "") {
+    abs_path <- dirname
+  } else if (!grepl("/$", dirname)) {
+    abs_path <- sprintf("%s/%s", dirname, basename)
+  } else {
+    abs_path <- sprintf("%s%s", dirname, basename)
+  }
 
-  # Return either the components of the normalized path, or the normalized path
-  # as a string
-  if (return_as_parts) {
+  # Return the path now, unless we need to split up and return as parts
+  if (!return_as_parts) {
+    return(abs_path)
+  } else {
+    if (grepl("(/$)|(:$)", abs_path)) {
+      dirname <- abs_path
+      basename <- ""
+    } else {
+      dirname <- dirname(abs_path)
+      basename <- basename(abs_path)
+    }
     return(list(
       project_id=gsub("^(project-[0123456789BFGJKPQVXYZbfgjkpqvxyz]{24}).*", "\\1", dirname),
       folder=gsub("project-[0123456789BFGJKPQVXYZbfgjkpqvxyz]{24}:", "", dirname),
       name=basename
     ))
-  } else {
-    # Add back in the target file or folder to the absolute path
-    if (basename == "") {
-      return(dirname)
-    } else if (!grepl("/$", dirname)) {
-      return(sprintf("%s/%s", dirname, basename))
-    } else {
-      return(sprintf("%s%s", dirname, basename))
-    }
   }
 }
 

@@ -50,9 +50,11 @@ dx_get_metadata <- function(remote_path) {
   # Get the metadata associated with the object at the remote_path:
   metadata <- suppressWarnings(system(sprintf("dx describe '%s' --json 2>&1", remote_path), intern=TRUE))
   if (!is.null(attr(metadata, "status"))) {
-    if (grepl("dxpy.exceptions.DXCLIError", metadata[1])) {
+    if (grepl("dxpy.exceptions.DXCLIError: No match found", metadata[1])) {
       # Can 'dx ls' remote_path but not 'dx describe' - must therefore be folder
       return(c(dx_normalize_path(remote_path, return_as_parts=TRUE), class="folder"))
+    } else if (grepl("dxpy.exceptions.DXCLIError: More than one match found", metadata[1])) {
+      stop("Multiple copies of ", remote_path, " found, unable to continue")
     } else {
       stop(paste(metadata, collapse="\n")) # Some other error, e.g. contacting servers
     }

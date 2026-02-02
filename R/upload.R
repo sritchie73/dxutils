@@ -60,7 +60,7 @@ dx_upload <- function(local_path, remote_path=".", exists="replace", silent=FALS
       if (exists == "error") {
         stop("Data already exists on DNAnexus at ", remote_path)
       } else if (exists == "skip") {
-        return(NULL)
+        return(invisible(NULL))
       } else if (exists == "replace") {
         if (dx_user_can_rm(project_metadata)) {
           msg <- suppressWarnings(system(sprintf("dx rm -rfa '%s' 2>&1", remote_path), intern=TRUE))
@@ -94,7 +94,7 @@ dx_upload <- function(local_path, remote_path=".", exists="replace", silent=FALS
     if (!is.null(attr(file_id, "status"))) stop(paste(file_id, collapse="\n")) # Something has gone wrong, we should be able to 'dx mv'
     cat(local_path, "uploaded to DNAnexus at", remote_path, "with file ID", file_id)
 
-    return(NULL)
+    return(invisible(NULL))
   } else {
     # We are uploading a folder
   }

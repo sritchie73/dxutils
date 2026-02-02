@@ -58,7 +58,7 @@ dx_download <- function(remote_path, local_path=".", exists="skip", missing="err
                system("dx pwd", intern=TRUE), "')")
         }
       } else if (missing == "skip") {
-        return(NULL)
+        return(invisible(NULL))
       } else if (missing == "wait") {
         cat(remote_path, "does not exist yet, waiting 10s...\n")
         Sys.sleep(10)
@@ -75,7 +75,7 @@ dx_download <- function(remote_path, local_path=".", exists="skip", missing="err
         if (incomplete == "error") {
           stop(remote_path, " is an incomplete file still in the process of uploading")
         } else if (incomplete == "skip") {
-          return(NULL)
+          return(invisible(NULL))
         } else if (incomplete == "wait") {
           cat(remote_path, " is an incomplete file, waiting 10s for upload to finish before trying again...\n")
           Sys.sleep(10)

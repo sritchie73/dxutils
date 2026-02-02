@@ -2,12 +2,12 @@
 % Please edit documentation in R/rm.R
 \name{dx_rm}
 \alias{dx_rm}
-\title{Delete an object or folder on a DNA nexus project}
+\title{Delete an object or folder on a DNAnexus project}
 \usage{
 dx_rm(remote_path, not_exists = "ignore")
 }
 \arguments{
-\item{remote_path}{DNA nexus file identifier or DNA nexus file/folder path
+\item{remote_path}{DNAnexus file identifier or DNAnexus file/folder path
 (Syntax: "projectID:/folder/path", "/folder/path", or "folder/path").
 Paths are relative to the current working directory in the current project
 unless otherwise specified.}
@@ -16,24 +16,24 @@ unless otherwise specified.}
 exist, either "ignore" or "error".}
 }
 \description{
-Deletes a file or recursively deletes a folder at the given path on a DNA
-nexus project. For projects where the user does not have file deletion
-permissions, moves the file or folder to the trash/ folder at the root folder
-of the project, creating that folder if necessary.
+Deletes a file or recursively deletes a folder at the given path on DNAnexus.
+For projects where the user does not have file deletion ermissions, moves the
+file or folder to the trash/ folder at the root folder of the project,
+creating that folder if necessary.
 }
 \details{
 Where the user has the necessary permissions to delete files, runs \verb{dx rm -rfa}
 on the provided 'remote_path'.
 
-If the user does not have delete permissions and the remote path is a DNA
-nexus object (e.g. a file), runs \verb{dx mv} to relocate the object to the trash/
-folder at the project root.
+If the user does not have delete permissions and the remote path is a
+DNAnexus object (e.g. a file), runs \verb{dx mv} to relocate the object to the
+trash/ folder at the project root.
 
 If the user does not have delete permissions and the remote path is a folder,
 renames the folder to include the current date and time, then moves that
 folder to trash/ with \verb{dx mv}. The renaming step ensures that the folder name
 is unique, which necessary to prevent errors when moving to the trash/ folder
 as there cannot be multiple folders with the same name in one location on a
-DNA nexus project, and \verb{dx mv} does not support merging two folders with the
+DNAnexus project, and \verb{dx mv} does not support merging two folders with the
 same name.
 }

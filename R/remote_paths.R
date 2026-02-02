@@ -1,4 +1,4 @@
-#' @param remote_path DNA nexus file identifier or DNA nexus file/folder path
+#' @param remote_path DNAnexus file identifier or DNAnexus file/folder path
 #'    (Syntax: "projectID:/folder/path", "/folder/path", or "folder/path").
 #'    Paths are relative to the current working directory in the current project
 #'    unless otherwise specified.
@@ -6,19 +6,19 @@
 #' @name remote_path
 NULL
 
-#' @param normalized_remote_path DNA nexus file or folder path that has been
+#' @param normalized_remote_path DNAnexus file or folder path that has been
 #'    processed by the `dx_normalize_path` function and now has the syntax
 #'    "projectID:/folder/path"
 #'
 #' @name normalized_remote_path
 NULL
 
-#' Get the current project and working directory on DNA nexus
+#' Get the current project and working directory on DNAnexus
 #'
 #' As opposed to 'dx pwd' returns the path with the project-ID instead of the
 #' project name
 #'
-#' @return a DNA nexus path with syntax 'project-ID:/path/to/folder'
+#' @return a DNAnexus path with syntax 'project-ID:/path/to/folder'
 #'
 #' @importFrom utils read.table
 dx_getwd <- function() {
@@ -28,26 +28,26 @@ dx_getwd <- function() {
   sprintf("%s:%s", env[env$key == "Current workspace", "value"], env[env$key == "Current folder", "value"])
 }
 
-#' Get the standardized absolute format of a remote path on DNA nexus
+#' Get the standardized absolute format of a remote path on DNAnexus
 #'
 #' @details
 #' This is designed as a low-level helper function - i.e. it avoids making
-#' expensive DNA nexus API calls to 'dx describe' to work out what is at the
+#' expensive DNAnexus API calls to 'dx describe' to work out what is at the
 #' remote_path.
 #'
-#' If the remote_path is a DNA nexus object identifier rather than a path,
+#' If the remote_path is a DNAnexus object identifier rather than a path,
 #' you need to use the `dx_path_from_metadata` function after extracting the
 #' object metadata using the `dx_get_metadata` function.
 #'
-#' @param remote_path a DNA nexus file/folder path with syntax
+#' @param remote_path a DNAnexus file/folder path with syntax
 #'    "projectID:/folder/path", "/folder/path", or "folder/path".
 #' @param return_as_parts logical; if TRUE, returns the result as a named list
 #'    containing the project ID, folder, and name.
 #'
-#' @returns a DNA nexus path with syntax 'project-ID:/path/to/file.ext'
+#' @returns a DNAnexus path with syntax 'project-ID:/path/to/file.ext'
 dx_normalize_path <- function(remote_path, return_as_parts=FALSE) {
   if (dx_is_data_id(remote_path)) {
-    stop("dx_normalize_path() must be used on a path not a DNA nexus data ID")
+    stop("dx_normalize_path() must be used on a path not a DNAnexus data ID")
   }
 
   # The easiest way to do this that also handles folders appears to
@@ -84,12 +84,12 @@ dx_normalize_path <- function(remote_path, return_as_parts=FALSE) {
       if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
     })
 
-    # Change the current working directory (and potentially project) on DNA nexus
+    # Change the current working directory (and potentially project) on DNAnexus
     # to the parent folder of remote_path
     msg <- suppressWarnings(system(sprintf("dx cd '%s' 2>&1", dirname), intern=TRUE))
     if (!is.null(attr(msg, "status"))) {
       if (grepl("Folder .* does not exist in project", msg[1])) {
-        stop("Could not find folder ", dirname, " on DNA nexus")
+        stop("Could not find folder ", dirname, " on DNAnexus")
       } else {
         stop(paste(msg, collapse="\n"))
       }
@@ -119,11 +119,11 @@ dx_normalize_path <- function(remote_path, return_as_parts=FALSE) {
   }
 }
 
-#' Extract the project ID from an absolute path on DNA nexus
+#' Extract the project ID from an absolute path on DNAnexus
 #'
 #' @inheritParams normalized_remote_path
 #'
-#' @returns a DNA nexus project ID
+#' @returns a DNAnexus project ID
 dx_extract_project_id <- function(normalized_remote_path) {
   gsub("^(project-[0123456789BFGJKPQVXYZbfgjkpqvxyz]{24}).*", "\\1", normalized_remote_path)
 }

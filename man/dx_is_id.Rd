@@ -2,7 +2,7 @@
 % Please edit documentation in R/ids.R
 \name{dx_is_id}
 \alias{dx_is_id}
-\title{Check whether a string matches the format of a DNA nexus unique ID}
+\title{Check whether a string matches the format of a DNAnexus unique ID}
 \usage{
 dx_is_id(string)
 }

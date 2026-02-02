@@ -2,7 +2,7 @@
 % Please edit documentation in R/ids.R
 \name{dx_is_job_id}
 \alias{dx_is_job_id}
-\title{Check whether a string matches the format of a DNA nexus job ID}
+\title{Check whether a string matches the format of a DNAnexus job ID}
 \usage{
 dx_is_job_id(string)
 }

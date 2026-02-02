@@ -2,12 +2,12 @@
 % Please edit documentation in R/download.R
 \name{dx_clone_tree}
 \alias{dx_clone_tree}
-\title{Clone the directory structure from a DNA nexus folder}
+\title{Clone the directory structure from a DNAnexus folder}
 \usage{
 dx_clone_tree(remote_path, local_path, remote_subdir)
 }
 \arguments{
-\item{remote_path}{DNA nexus file identifier or DNA nexus file/folder path
+\item{remote_path}{DNAnexus file identifier or DNAnexus file/folder path
 (Syntax: "projectID:/folder/path", "/folder/path", or "folder/path").
 Paths are relative to the current working directory in the current project
 unless otherwise specified.}
@@ -17,7 +17,7 @@ unless otherwise specified.}
 \item{remote_subdir}{subdirectory relative to the remote_path (see Details)}
 }
 \description{
-Clone the directory structure from a DNA nexus folder
+Clone the directory structure from a DNAnexus folder
 }
 \details{
 Recursively traverses the remote folder location given by \code{remote_path} to

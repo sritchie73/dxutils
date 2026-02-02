@@ -1,14 +1,14 @@
 Package: dxutils
 Type: Package
-Title: DNA nexus command line utility wrappers and extensions
+Title: DNAnexus command line utility wrappers and extensions
 Version: 0.1.0
 Authors@R: person(given="Scott", family="Ritchie", 
                   email="sritchie73@gmail.com", 
                   role=c("aut", "cre"),
                   comment=(ORCID="0000-0002-8454-9548"))
 URL: https://github.com/sritchie73/dxutils
-Description: Utilities for working with DNA nexus projects in R. Provides wrapper
-    functions for common DNA nexus command line utilities and extends their 
+Description: Utilities for working with DNAnexus in R. Provides wrapper 
+    functions for common DNAnexus command line utilities and extends their 
     functionality in ways that enhance user convenience and facilitate 
     checkpointing for low-priority jobs.
 License: MIT + file LICENSE

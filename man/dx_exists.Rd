@@ -2,23 +2,23 @@
 % Please edit documentation in R/file_metadata.R
 \name{dx_exists}
 \alias{dx_exists}
-\title{Check whether a file or folder exists on a DNA nexus project}
+\title{Check whether a file or folder exists on a DNAnexus project}
 \usage{
 dx_exists(remote_path, incomplete = TRUE)
 }
 \arguments{
-\item{remote_path}{DNA nexus file identifier or DNA nexus file/folder path
+\item{remote_path}{DNAnexus file identifier or DNAnexus file/folder path
 (Syntax: "projectID:/folder/path", "/folder/path", or "folder/path").
 Paths are relative to the current working directory in the current project
 unless otherwise specified.}
 
 \item{incomplete}{logical; if the 'remote_path' points to a file that is
-still being written to by another DNA nexus job (see Details), should we
-consider this file to exist on DNA nexus?}
+still being written to by another DNAnexus job (see Details), should we
+consider this file to exist on DNAnexus?}
 }
 \value{
 Logical; TRUE or FALSE.
 }
 \description{
-Check whether a file or folder exists on a DNA nexus project
+Check whether a file or folder exists on a DNAnexus project
 }

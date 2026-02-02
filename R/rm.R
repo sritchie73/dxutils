@@ -1,25 +1,25 @@
-#' Delete an object or folder on a DNA nexus project
+#' Delete an object or folder on a DNAnexus project
 #'
 #' @description
-#' Deletes a file or recursively deletes a folder at the given path on a DNA
-#' nexus project. For projects where the user does not have file deletion
-#' permissions, moves the file or folder to the trash/ folder at the root folder
-#' of the project, creating that folder if necessary.
+#' Deletes a file or recursively deletes a folder at the given path on DNAnexus.
+#' For projects where the user does not have file deletion ermissions, moves the
+#' file or folder to the trash/ folder at the root folder of the project,
+#' creating that folder if necessary.
 #'
 #' @details
 #' Where the user has the necessary permissions to delete files, runs `dx rm -rfa`
 #' on the provided 'remote_path'.
 #'
-#' If the user does not have delete permissions and the remote path is a DNA
-#' nexus object (e.g. a file), runs `dx mv` to relocate the object to the trash/
-#' folder at the project root.
+#' If the user does not have delete permissions and the remote path is a
+#' DNAnexus object (e.g. a file), runs `dx mv` to relocate the object to the
+#' trash/ folder at the project root.
 #'
 #' If the user does not have delete permissions and the remote path is a folder,
 #' renames the folder to include the current date and time, then moves that
 #' folder to trash/ with `dx mv`. The renaming step ensures that the folder name
 #' is unique, which necessary to prevent errors when moving to the trash/ folder
 #' as there cannot be multiple folders with the same name in one location on a
-#' DNA nexus project, and `dx mv` does not support merging two folders with the
+#' DNAnexus project, and `dx mv` does not support merging two folders with the
 #' same name.
 #'
 #' @inheritParams remote_path
@@ -55,7 +55,7 @@ dx_rm <- function(remote_path, not_exists="ignore") {
     msg <- suppressWarnings(system(sprintf("dx rm -rfa '%s' 2>&1", remote_path), intern=TRUE))
     if (!is.null(attr(msg, "status"))) {
       if (grepl("Could not resolve", msg[1])) {
-        if (not_exists == "error") stop(remote_path, " not found on DNA nexus")
+        if (not_exists == "error") stop(remote_path, " not found on DNAnexus")
       } else {
         stop(paste(msg, collapse="\n"))
       }
@@ -81,7 +81,7 @@ dx_rm <- function(remote_path, not_exists="ignore") {
       msg <- suppressWarnings(system(sprintf("dx mv '%s-%s' %s:trash/ 2>&1", remote_path, uid, project_id), intern=TRUE))
       if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
     } else {
-      # Multiple files with the same name can exist in one location on DNA nexus
+      # Multiple files with the same name can exist in one location on DNAnexus
       # by design - as they are distinguished by file ID not name. So we can
       # just move any file to trash/ without needing to rename
       msg <- suppressWarnings(system(sprintf("dx mv '%s' %s:trash/ 2>&1", remote_path, entity_metadata$project), intern=TRUE))

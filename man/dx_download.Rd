@@ -2,18 +2,19 @@
 % Please edit documentation in R/download.R
 \name{dx_download}
 \alias{dx_download}
-\title{Download a file or folder from a DNA nexus project}
+\title{Download a file or folder from a DNAnexus project}
 \usage{
 dx_download(
   remote_path,
-  local_path,
+  local_path = ".",
   exists = "skip",
   missing = "error",
-  incomplete = "wait"
+  incomplete = "wait",
+  silent = FALSE
 )
 }
 \arguments{
-\item{remote_path}{DNA nexus file identifier or DNA nexus file/folder path
+\item{remote_path}{DNAnexus file identifier or DNAnexus file/folder path
 (Syntax: "projectID:/folder/path", "/folder/path", or "folder/path").
 Paths are relative to the current working directory in the current project
 unless otherwise specified.}
@@ -23,12 +24,15 @@ unless otherwise specified.}
 \item{exists}{action to take if the file(s) being downloaded already exists
 on the local machine. One of "error", "overwrite", or "skip" (default).}
 
-\item{missing}{action to take if the 'remote_path' is not found on DNA nexus.
+\item{missing}{action to take if the 'remote_path' is not found on DNAnexus.
 One of "error" (default), "skip", or "wait".}
 
 \item{incomplete}{action to take if the 'remote_path' points to an incomplete
-file on DNA nexus not created by the current DNA nexus job. One of
+file on DNAnexus not created by the current DNAnexus job. One of
 "error", "skip", or "wait" (default).}
+
+\item{silent}{logical; if TRUE does not print message on completion of each
+file download.}
 }
 \value{
 The path on the local machine where the file or files were downloaded

@@ -1,4 +1,4 @@
-#' Get the metadata associated with a DNA nexus project
+#' Get the metadata associated with a DNAnexus project
 #'
 #' @inheritParams normalized_remote_path
 #'
@@ -17,7 +17,7 @@ dx_get_project_metadata <- function(normalized_remote_path) {
   return(fromJSON(metadata))
 }
 
-#' Determine access permissions of a DNA nexus project
+#' Determine access permissions of a DNAnexus project
 #'
 #' @param metadata project metadata extracted by the `dx_get_project_metadata`
 #'    function
@@ -29,7 +29,7 @@ dx_get_project_permissions <- function(metadata) {
   ordered(metadata$level, levels=c("NONE", "VIEW", "CONTRIBUTE", "ADMINISTER"))
 }
 
-#' Checks whether the user can delete files on a DNA nexus project
+#' Checks whether the user can delete files on a DNAnexus project
 #'
 #' @param metadata project metadata extracted by the `dx_get_project_metadata`
 #'   function
@@ -48,7 +48,7 @@ dx_user_can_rm <- function(metadata) {
 #'
 #' @param metadata project metadata extracted by the `dx_get_project_metadata`
 #'   function
-#' @param minimum_permissions minimum permissions user must have on the DNA nexus
+#' @param minimum_permissions minimum permissions user must have on the DNAnexus
 #'   project. Must be one of "VIEW", "CONTRIBUTE" or "ADMINISITER"
 #'
 #' @returns NULL

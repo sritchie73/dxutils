@@ -2,12 +2,12 @@
 % Please edit documentation in R/project_metadata.R
 \name{dx_get_project_metadata}
 \alias{dx_get_project_metadata}
-\title{Get the metadata associated with a DNA nexus project}
+\title{Get the metadata associated with a DNAnexus project}
 \usage{
 dx_get_project_metadata(normalized_remote_path)
 }
 \arguments{
-\item{normalized_remote_path}{DNA nexus file or folder path that has been
+\item{normalized_remote_path}{DNAnexus file or folder path that has been
 processed by the \code{dx_normalize_path} function and now has the syntax
 "projectID:/folder/path"}
 }
@@ -16,5 +16,5 @@ a named list containing the project metadata obtained from the
 output of \verb{dx describe --json}
 }
 \description{
-Get the metadata associated with a DNA nexus project
+Get the metadata associated with a DNAnexus project
 }

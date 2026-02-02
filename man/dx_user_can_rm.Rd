@@ -2,7 +2,7 @@
 % Please edit documentation in R/project_metadata.R
 \name{dx_user_can_rm}
 \alias{dx_user_can_rm}
-\title{Checks whether the user can delete files on a DNA nexus project}
+\title{Checks whether the user can delete files on a DNAnexus project}
 \usage{
 dx_user_can_rm(metadata)
 }
@@ -14,7 +14,7 @@ function}
 Logical; either TRUE or FALSE.
 }
 \description{
-Checks whether the user can delete files on a DNA nexus project
+Checks whether the user can delete files on a DNAnexus project
 }
 \details{
 Returns TRUE if the user has at least "CONTRIBUTE" permissions, or if the

@@ -1,4 +1,4 @@
-#' Check whether a string matches the format of a DNA nexus unique ID
+#' Check whether a string matches the format of a DNAnexus unique ID
 #'
 #' See <https://documentation.dnanexus.com/developer/api/entity-ids>
 #'
@@ -10,7 +10,7 @@ dx_is_id <- function(string) {
   grepl("^(project)|(container)|(file)|(applet)|(record)|(app)|(database)|(job)-[0123456789BFGJKPQVXYZbfgjkpqvxyz]{24}$", string)
 }
 
-#' Check whether a string matches the format of a DNA nexus project ID
+#' Check whether a string matches the format of a DNAnexus project ID
 #'
 #' See <https://documentation.dnanexus.com/developer/api/entity-ids>
 #'
@@ -22,7 +22,7 @@ dx_is_project_id <- function(string) {
   grepl("^project-[0123456789BFGJKPQVXYZbfgjkpqvxyz]{24}$", string)
 }
 
-#' Check whether a string matches the format of a DNA nexus job ID
+#' Check whether a string matches the format of a DNAnexus job ID
 #'
 #' See <https://documentation.dnanexus.com/developer/api/entity-ids>
 #'
@@ -34,7 +34,7 @@ dx_is_job_id <- function(string) {
   grepl("^job-[0123456789BFGJKPQVXYZbfgjkpqvxyz]{24}$", string)
 }
 
-#' Check whether a string matches the format of a DNA nexus data object
+#' Check whether a string matches the format of a DNAnexus data object
 #'
 #' See <https://documentation.dnanexus.com/developer/api/entity-ids>
 #'

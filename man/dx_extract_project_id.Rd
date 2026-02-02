@@ -2,18 +2,18 @@
 % Please edit documentation in R/remote_paths.R
 \name{dx_extract_project_id}
 \alias{dx_extract_project_id}
-\title{Extract the project ID from an absolute path on DNA nexus}
+\title{Extract the project ID from an absolute path on DNAnexus}
 \usage{
 dx_extract_project_id(normalized_remote_path)
 }
 \arguments{
-\item{normalized_remote_path}{DNA nexus file or folder path that has been
+\item{normalized_remote_path}{DNAnexus file or folder path that has been
 processed by the \code{dx_normalize_path} function and now has the syntax
 "projectID:/folder/path"}
 }
 \value{
-a DNA nexus project ID
+a DNAnexus project ID
 }
 \description{
-Extract the project ID from an absolute path on DNA nexus
+Extract the project ID from an absolute path on DNAnexus
 }

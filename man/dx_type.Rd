@@ -2,7 +2,7 @@
 % Please edit documentation in R/file_metadata.R
 \name{dx_type}
 \alias{dx_type}
-\title{Determine the type of entity at a location on a DNA nexus project from metadata}
+\title{Determine the type of entity at a location on a DNAnexus project from metadata}
 \usage{
 dx_type(metadata)
 }
@@ -13,8 +13,8 @@ function}
 \value{
 "none" if nothing exists at the 'remote_path' provided, "folder" if
 the 'remote_path' points to a folder, or the Class attribute (e.g. "file")
-if the 'remote_path' points to a DNA nexus object.
+if the 'remote_path' points to a DNAnexus object.
 }
 \description{
-Determine the type of entity at a location on a DNA nexus project from metadata
+Determine the type of entity at a location on a DNAnexus project from metadata
 }

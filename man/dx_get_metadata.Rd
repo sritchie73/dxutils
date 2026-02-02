@@ -2,12 +2,12 @@
 % Please edit documentation in R/file_metadata.R
 \name{dx_get_metadata}
 \alias{dx_get_metadata}
-\title{Get the metadata associated with a location on DNA nexus}
+\title{Get the metadata associated with a location on DNAnexus}
 \usage{
 dx_get_metadata(remote_path)
 }
 \arguments{
-\item{remote_path}{DNA nexus file identifier or DNA nexus file/folder path
+\item{remote_path}{DNAnexus file identifier or DNAnexus file/folder path
 (Syntax: "projectID:/folder/path", "/folder/path", or "folder/path").
 Paths are relative to the current working directory in the current project
 unless otherwise specified.}
@@ -20,6 +20,6 @@ object metadata obtained from the output of \verb{dx describe --json}
 }
 \description{
 If the location resolves to a file that is in the "open" state, removes that
-file if it has an "uploaded_by" property matching the current DNA nexus job
+file if it has an "uploaded_by" property matching the current DNAnexus job
 ID (see Details).
 }

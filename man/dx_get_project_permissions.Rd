@@ -2,7 +2,7 @@
 % Please edit documentation in R/project_metadata.R
 \name{dx_get_project_permissions}
 \alias{dx_get_project_permissions}
-\title{Determine access permissions of a DNA nexus project}
+\title{Determine access permissions of a DNAnexus project}
 \usage{
 dx_get_project_permissions(metadata)
 }
@@ -14,5 +14,5 @@ function}
 "NONE", "VIEW", "CONTRIBUTE", or "ADMINISTER", as an ordered factor.
 }
 \description{
-Determine access permissions of a DNA nexus project
+Determine access permissions of a DNAnexus project
 }

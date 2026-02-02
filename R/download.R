@@ -15,17 +15,19 @@
 #' @param local_path location on the local machine to download the file or folder.
 #' @param exists action to take if the file(s) being downloaded already exists
 #'    on the local machine. One of "error", "overwrite", or "skip" (default).
-#' @param missing action to take if the 'remote_path' is not found on DNA nexus.
+#' @param missing action to take if the 'remote_path' is not found on DNAnexus.
 #'    One of "error" (default), "skip", or "wait".
 #' @param incomplete action to take if the 'remote_path' points to an incomplete
-#'    file on DNA nexus not created by the current DNA nexus job. One of
+#'    file on DNAnexus not created by the current DNAnexus job. One of
 #'    "error", "skip", or "wait" (default).
+#' @param silent logical; if TRUE does not print message on completion of each
+#'    file download.
 #'
 #' @returns The path on the local machine where the file or files were downloaded
 #'    to, replacing the equivalent path given in the 'remote_path' argument.
 #'
 #' @export
-dx_download <- function(remote_path, local_path, exists="skip", missing="error", incomplete="wait") {
+dx_download <- function(remote_path, local_path=".", exists="skip", missing="error", incomplete="wait", silent=FALSE) {
   # Check for valid arguments
   stopifnot(length(remote_path) == 1 && is.character(remote_path) && !is.na(remote_path))
   stopifnot(length(local_path) == 1 && is.character(local_path) && !is.na(local_path))
@@ -35,8 +37,8 @@ dx_download <- function(remote_path, local_path, exists="skip", missing="error",
 
   # Enter while TRUE loop to handle conditions where we may have to wait
   while (TRUE) {
-    # Get information about whatever is stored at the target location on DNA
-    # nexus (if anything)
+    # Get information about whatever is stored at the target location on
+    # DNAnexus (if anything)
     metadata <- dx_get_metadata(remote_path)
 
     # Determine if its a file, folder, or points to something that doesn't exist
@@ -49,9 +51,9 @@ dx_download <- function(remote_path, local_path, exists="skip", missing="error",
       # "wait".
       if (missing == "error") {
         if (grepl(":", remote_path) || dx_is_id(remote_path)) {
-          stop("'", remote_path, "' not found on DNA nexus")
+          stop("'", remote_path, "' not found on DNAnexus")
         } else {
-          stop("'", remote_path, "' not found in current working directory on DNA nexus ('",
+          stop("'", remote_path, "' not found in current working directory on DNAnexus ('",
                system("dx pwd", intern=TRUE), "')")
         }
       } else if (missing == "skip") {
@@ -80,10 +82,10 @@ dx_download <- function(remote_path, local_path, exists="skip", missing="error",
         }
       }
 
-      # If the file is in the 'closing' state, always wait for DNA nexus to
+      # If the file is in the 'closing' state, always wait for DNAnexus to
       # finish finalizing the file before downloading
       if (state == "closing") {
-        cat(remote_path, "is in the process of closing, waiting 10s for DNA nexus to finalize the file before trying again...\n")
+        cat(remote_path, "is in the process of closing, waiting 10s for DNAnexus to finalize the file before trying again...\n")
         Sys.sleep(10)
         next
       }
@@ -150,7 +152,7 @@ dx_download <- function(remote_path, local_path, exists="skip", missing="error",
       file_list_metadata <- fromJSON(file_list_metadata)
 
       # Check if any are in the open state, and if they are, check whether any
-      # have a "uploaded_by" property matching the current DNA nexus job ID.
+      # have a "uploaded_by" property matching the current DNAnexus job ID.
       # If there are matches, delete those files, remove them from the download
       # list, and continue
       if (
@@ -200,7 +202,7 @@ dx_download <- function(remote_path, local_path, exists="skip", missing="error",
 
         cat(remote_path, "contains", length(incomplete_files),
             "files in the process of closing:\n", paste(incomplete_files, collapse="\n"),
-            "waiting 10s for DNA nexus to finalize files before trying again...\n")
+            "waiting 10s for DNAnexus to finalize files before trying again...\n")
         Sys.sleep(10)
         next
       }
@@ -266,7 +268,7 @@ dx_download <- function(remote_path, local_path, exists="skip", missing="error",
   }
 }
 
-#' Clone the directory structure from a DNA nexus folder
+#' Clone the directory structure from a DNAnexus folder
 #'
 #' @details
 #' Recursively traverses the remote folder location given by `remote_path` to

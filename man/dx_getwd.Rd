@@ -2,12 +2,12 @@
 % Please edit documentation in R/remote_paths.R
 \name{dx_getwd}
 \alias{dx_getwd}
-\title{Get the current project and working directory on DNA nexus}
+\title{Get the current project and working directory on DNAnexus}
 \usage{
 dx_getwd()
 }
 \value{
-a DNA nexus path with syntax 'project-ID:/path/to/folder'
+a DNAnexus path with syntax 'project-ID:/path/to/folder'
 }
 \description{
 As opposed to 'dx pwd' returns the path with the project-ID instead of the

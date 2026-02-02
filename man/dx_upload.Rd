@@ -2,20 +2,20 @@
 % Please edit documentation in R/upload.R
 \name{dx_upload}
 \alias{dx_upload}
-\title{Upload a file or folder to a DNA nexus project}
+\title{Upload a file or folder to a DNAnexus project}
 \usage{
 dx_upload(local_path, remote_path, exists = "replace")
 }
 \arguments{
 \item{local_path}{path of the file or folder on the local machine to upload.}
 
-\item{remote_path}{DNA nexus file identifier or DNA nexus file/folder path
+\item{remote_path}{DNAnexus file identifier or DNAnexus file/folder path
 (Syntax: "projectID:/folder/path", "/folder/path", or "folder/path").
 Paths are relative to the current working directory in the current project
 unless otherwise specified.}
 
-\item{exists}{action to take if the file being uploaded already exists on DNA
-nexus project. One of "error", "replace" (default), or "skip".}
+\item{exists}{action to take if the file being uploaded already exists on
+DNAnexus. One of "error", "replace" (default), or "skip".}
 }
 \description{
 Extends the \verb{dx upload} command line tool to enable recursive upload of
@@ -29,11 +29,11 @@ When uploading folders, the directory tree is recreated at the destination
 ending in "/" the contents of the folder are uploaded, otherwise the folder
 itself is uploaded at the destination 'remote_path'.
 }
-\section{File states on DNA nexus}{
-Files on DNA nexus can be in three possible states: "closed", "closing", or
+\section{File states on DNAnexus}{
+Files on DNAnexus can be in three possible states: "closed", "closing", or
 "open". Files in the "closed" state are those that are complete and not being
 actively written to by \verb{dx upload}. Files in the "closing" state are those
-where \verb{dx upload} has finished, and DNA nexus is now finalizing the file.
+where \verb{dx upload} has finished, and DNAnexus is now finalizing the file.
 Files in the "open" state are those that are being actively written to by a
 \verb{dx upload} process, or where a \verb{dx upload} process was killed part way
 through an upload, e.g. when a low-priority job is interrupted and restarted
@@ -41,7 +41,7 @@ by AWS.
 
 To help distinguish between these scenarios and to facilitate checkpointing,
 the \code{\link[=dx_upload]{dx_upload()}} function attaches the job ID to the each file as a property
-named 'uploaded_by' if run from a DNA nexus job (e.g. from a remote cloud
+named 'uploaded_by' if run from a DNAnexus job (e.g. from a remote cloud
 workstation) so that restarted jobs can identify files which were interrupted
 mid-upload and remove them when next queried.
 }

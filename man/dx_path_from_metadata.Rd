@@ -2,7 +2,7 @@
 % Please edit documentation in R/file_metadata.R
 \name{dx_path_from_metadata}
 \alias{dx_path_from_metadata}
-\title{Get the path of a file (or other data object) on DNA nexus from metadata}
+\title{Get the path of a file (or other data object) on DNAnexus from metadata}
 \usage{
 dx_path_from_metadata(metadata)
 }
@@ -11,8 +11,8 @@ dx_path_from_metadata(metadata)
 function}
 }
 \value{
-a DNA nexus path with syntax 'project-ID:/path/to/file.ext'
+a DNAnexus path with syntax 'project-ID:/path/to/file.ext'
 }
 \description{
-Get the path of a file (or other data object) on DNA nexus from metadata
+Get the path of a file (or other data object) on DNAnexus from metadata
 }

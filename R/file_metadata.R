@@ -1,8 +1,8 @@
-#' @details # File states on DNA nexus
-#' Files on DNA nexus can be in three possible states: "closed", "closing", or
+#' @details # File states on DNAnexus
+#' Files on DNAnexus can be in three possible states: "closed", "closing", or
 #' "open". Files in the "closed" state are those that are complete and not being
 #' actively written to by `dx upload`. Files in the "closing" state are those
-#' where `dx upload` has finished, and DNA nexus is now finalizing the file.
+#' where `dx upload` has finished, and DNAnexus is now finalizing the file.
 #' Files in the "open" state are those that are being actively written to by a
 #' `dx upload` process, or where a `dx upload` process was killed part way
 #' through an upload, e.g. when a low-priority job is interrupted and restarted
@@ -10,17 +10,17 @@
 #'
 #' To help distinguish between these scenarios and to facilitate checkpointing,
 #' the [dx_upload()] function attaches the job ID to the each file as a property
-#' named 'uploaded_by' if run from a DNA nexus job (e.g. from a remote cloud
+#' named 'uploaded_by' if run from a DNAnexus job (e.g. from a remote cloud
 #' workstation) so that restarted jobs can identify files which were interrupted
 #' mid-upload and remove them when next queried.
 #'
 #' @name file_states
 NULL
 
-#' Get the metadata associated with a location on DNA nexus
+#' Get the metadata associated with a location on DNAnexus
 #'
 #' If the location resolves to a file that is in the "open" state, removes that
-#' file if it has an "uploaded_by" property matching the current DNA nexus job
+#' file if it has an "uploaded_by" property matching the current DNAnexus job
 #' ID (see Details).
 #'
 #' @inherit file_states details
@@ -34,7 +34,7 @@ NULL
 #'
 #' @importFrom jsonlite fromJSON
 dx_get_metadata <- function(remote_path) {
-  # Check if we can resolve the given remote_path to a location on DNA nexus
+  # Check if we can resolve the given remote_path to a location on DNAnexus
   exists <- suppressWarnings(system(sprintf("dx ls '%s' 2>&1", remote_path), intern=TRUE))
   if (!is.null(attr(exists, "status"))) {
     if (grepl("dxpy.utils.resolver.ResolutionError", exists[1])) {
@@ -59,7 +59,7 @@ dx_get_metadata <- function(remote_path) {
   metadata <- fromJSON(metadata)
 
   # If the file is in the open state check whether it has an uploaded_by
-  # property matching the current DNA nexus job ID, in which case we remove
+  # property matching the current DNAnexus job ID, in which case we remove
   # the file
   if (
     metadata$state == "open" && Sys.getenv("DX_JOB_ID") == "" &&
@@ -90,14 +90,14 @@ dx_get_metadata <- function(remote_path) {
   return(metadata)
 }
 
-#' Determine the type of entity at a location on a DNA nexus project from metadata
+#' Determine the type of entity at a location on a DNAnexus project from metadata
 #'
 #' @param metadata file metadata extracted by the internal `dx_get_metadata`
 #'    function
 #'
 #' @returns "none" if nothing exists at the 'remote_path' provided, "folder" if
 #'  the 'remote_path' points to a folder, or the Class attribute (e.g. "file")
-#'  if the 'remote_path' points to a DNA nexus object.
+#'  if the 'remote_path' points to a DNAnexus object.
 dx_type <- function(metadata) {
   # Extract relevant information
   if (is.null(names(metadata))) {
@@ -107,7 +107,7 @@ dx_type <- function(metadata) {
   }
 }
 
-#' Get the state of a file (or other data object) on DNA nexus from metadata
+#' Get the state of a file (or other data object) on DNAnexus from metadata
 #'
 #' @inherit file_states details
 #'
@@ -128,12 +128,12 @@ dx_state <- function(metadata) {
   }
 }
 
-#' Get the path of a file (or other data object) on DNA nexus from metadata
+#' Get the path of a file (or other data object) on DNAnexus from metadata
 #'
 #' @param metadata file metadata extracted by the internal `dx_get_metadata`
 #'    function
 #'
-#' @returns a DNA nexus path with syntax 'project-ID:/path/to/file.ext'
+#' @returns a DNAnexus path with syntax 'project-ID:/path/to/file.ext'
 dx_path_from_metadata <- function(metadata) {
   if (metadata$folder == "/") {
     fmt <- "%s:%s%s"
@@ -143,14 +143,14 @@ dx_path_from_metadata <- function(metadata) {
   sprintf(fmt, metadata$project, metadata$folder, metadata$name)
 }
 
-#' Check whether a file or folder exists on a DNA nexus project
+#' Check whether a file or folder exists on a DNAnexus project
 #'
 #' @inherit file_states details
 #'
 #' @inheritParams remote_path
 #' @param incomplete logical; if the 'remote_path' points to a file that is
-#'   still being written to by another DNA nexus job (see Details), should we
-#'   consider this file to exist on DNA nexus?
+#'   still being written to by another DNAnexus job (see Details), should we
+#'   consider this file to exist on DNAnexus?
 #'
 #' @returns Logical; TRUE or FALSE.
 #'
@@ -172,7 +172,7 @@ dx_exists <- function(remote_path, incomplete=TRUE) {
   }
 }
 
-#' Throw an error if the requested object or folder does not exist on DNA nexus
+#' Throw an error if the requested object or folder does not exist on DNAnexus
 #'
 #' @inherit file_states details
 #'
@@ -189,9 +189,9 @@ assert_dx_exists <- function(remote_path, incomplete=TRUE) {
   # message depending on how the user has provided the remote_path.
   if (!dx_exists(remote_path, incomplete)) {
     if (grepl(":", remote_path) || dx_is_id(remote_path)) {
-      stop("'", remote_path, "' not found on DNA nexus")
+      stop("'", remote_path, "' not found on DNAnexus")
     } else {
-      stop("'", remote_path, "' not found in current working directory on DNA nexus ('",
+      stop("'", remote_path, "' not found in current working directory on DNAnexus ('",
            system("dx pwd", intern=TRUE), "')")
     }
   }

@@ -1,4 +1,4 @@
-#' Upload a file or folder to a DNA nexus project
+#' Upload a file or folder to a DNAnexus project
 #'
 #' Extends the `dx upload` command line tool to enable recursive upload of
 #' folders and resumption of interrupted uploads. Unlike `dx upload`, assumes
@@ -15,8 +15,8 @@
 #'
 #' @param local_path path of the file or folder on the local machine to upload.
 #' @inheritParams remote_path
-#' @param exists action to take if the file being uploaded already exists on DNA
-#'    nexus project. One of "error", "replace" (default), or "skip".
+#' @param exists action to take if the file being uploaded already exists on
+#'    DNAnexus. One of "error", "replace" (default), or "skip".
 #'
 #' @returns NULL
 #'

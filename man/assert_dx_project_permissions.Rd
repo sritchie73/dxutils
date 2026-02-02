@@ -10,7 +10,7 @@ assert_dx_project_permissions(metadata, minimum_permissions)
 \item{metadata}{project metadata extracted by the \code{dx_get_project_metadata}
 function}
 
-\item{minimum_permissions}{minimum permissions user must have on the DNA nexus
+\item{minimum_permissions}{minimum permissions user must have on the DNAnexus
 project. Must be one of "VIEW", "CONTRIBUTE" or "ADMINISITER"}
 }
 \description{

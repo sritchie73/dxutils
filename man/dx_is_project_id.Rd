@@ -2,7 +2,7 @@
 % Please edit documentation in R/ids.R
 \name{dx_is_project_id}
 \alias{dx_is_project_id}
-\title{Check whether a string matches the format of a DNA nexus project ID}
+\title{Check whether a string matches the format of a DNAnexus project ID}
 \usage{
 dx_is_project_id(string)
 }

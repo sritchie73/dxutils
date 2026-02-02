@@ -4,7 +4,7 @@
 \alias{dx_upload}
 \title{Upload a file or folder to a DNAnexus project}
 \usage{
-dx_upload(local_path, remote_path, exists = "replace", silent = FALSE)
+dx_upload(local_path, remote_path = ".", exists = "replace", silent = FALSE)
 }
 \arguments{
 \item{local_path}{path of the file or folder on the local machine to upload.}
@@ -28,9 +28,9 @@ uploading a file with the same name that already exists at the 'remote_path'.
 }
 \details{
 When uploading folders, the directory tree is recreated at the destination
-'remote_path' location following unix conventions: if the path is a folder
-ending in "/" the contents of the folder are uploaded, otherwise the folder
-itself is uploaded at the destination 'remote_path'.
+'remote_path' location following unix conventions: if the 'local_path' is a
+folder ending in "/" the contents of the folder are uploaded otherwise the
+folder itself is uploaded at the destination 'remote_path'.
 }
 \section{File states on DNAnexus}{
 Files on DNAnexus can be in three possible states: "closed", "closing", or

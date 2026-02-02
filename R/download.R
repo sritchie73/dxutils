@@ -34,6 +34,7 @@ dx_download <- function(remote_path, local_path=".", exists="skip", missing="err
   stopifnot(length(exists) == 1 && exists %in% c("error", "overwrite", "skip"))
   stopifnot(length(missing) == 1 && missing %in% c("error", "skip", "wait"))
   stopifnot(length(incomplete) == 1 && incomplete %in% c("error", "skip", "wait"))
+  stopifnot(length(silent) == 1 && is.logical(silent) && !is.na(silent))
 
   # Enter while TRUE loop to handle conditions where we may have to wait
   while (TRUE) {

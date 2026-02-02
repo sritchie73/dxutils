@@ -13,10 +13,12 @@ Paths are relative to the current working directory in the current project
 unless otherwise specified.}
 }
 \value{
-"none" if nothing exists at that location, a named list containing
-basic information about the folder (folder name, parent folder, and project)
-if the location resolves to a folder, or a named list containing the
-object metadata obtained from the output of \verb{dx describe --json}
+a named list containing information about the target location on
+DNAnexus. If it resolves to a DNAnexus object, then the output of
+\verb{dx describe --json}. Otherwise a named list containing basic information:
+the project ID, parent folder, target file/folder name, and either "folder"
+or "none" as the class depending on whether or the remote_path resolves
+to a folder on a DNAnexus project or the remote_path does not exist (yet).
 }
 \description{
 If the location resolves to a file that is in the "open" state, removes that

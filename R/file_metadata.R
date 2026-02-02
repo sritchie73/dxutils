@@ -27,10 +27,12 @@ NULL
 #'
 #' @inheritParams remote_path
 #'
-#' @returns "none" if nothing exists at that location, a named list containing
-#'   basic information about the folder (folder name, parent folder, and project)
-#'   if the location resolves to a folder, or a named list containing the
-#'   object metadata obtained from the output of `dx describe --json`
+#' @returns a named list containing information about the target location on
+#'   DNAnexus. If it resolves to a DNAnexus object, then the output of
+#'   `dx describe --json`. Otherwise a named list containing basic information:
+#'   the project ID, parent folder, target file/folder name, and either "folder"
+#'   or "none" as the class depending on whether or the remote_path resolves
+#'   to a folder on a DNAnexus project or the remote_path does not exist (yet).
 #'
 #' @importFrom jsonlite fromJSON
 dx_get_metadata <- function(remote_path) {
@@ -38,7 +40,8 @@ dx_get_metadata <- function(remote_path) {
   exists <- suppressWarnings(system(sprintf("dx ls '%s' 2>&1", remote_path), intern=TRUE))
   if (!is.null(attr(exists, "status"))) {
     if (grepl("dxpy.utils.resolver.ResolutionError", exists[1])) {
-      return("none") # File/folder not found
+      # Object does not exist
+      return(c(dx_normalize_path(remote_path, return_as_parts=TRUE), class="none"))
     } else {
       stop(paste(exists, collapse="\n")) # Some other error (e.g. permissions, connecting to server, etc.)
     }
@@ -48,7 +51,7 @@ dx_get_metadata <- function(remote_path) {
   metadata <- suppressWarnings(system(sprintf("dx describe '%s' --json 2>&1", remote_path), intern=TRUE))
   if (!is.null(attr(metadata, "status"))) {
     if (grepl("dxpy.exceptions.DXCLIError", metadata[1])) {
-      # no object to describe at path - i.e. must be a folder
+      # Can 'dx ls' remote_path but not 'dx describe' - must therefore be folder
       return(c(dx_normalize_path(remote_path, return_as_parts=TRUE), class="folder"))
     } else {
       stop(paste(metadata, collapse="\n")) # Some other error, e.g. contacting servers
@@ -99,12 +102,7 @@ dx_get_metadata <- function(remote_path) {
 #'  the 'remote_path' points to a folder, or the Class attribute (e.g. "file")
 #'  if the 'remote_path' points to a DNAnexus object.
 dx_type <- function(metadata) {
-  # Extract relevant information
-  if (is.null(names(metadata))) {
-    return(metadata) # "none"
-  } else {
-    return(metadata$class) # "folder", file", "record", "applet", "database" etc.
-  }
+  return(metadata$class)
 }
 
 #' Get the state of a file (or other data object) on DNAnexus from metadata

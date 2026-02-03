@@ -48,15 +48,16 @@ dx_upload <- function(local_path, remote_path=".", exists="replace", silent=FALS
 
     # Find out if anything exists already at the target location
     location_metadata <- dx_get_metadata(remote_path)
+    location_type <- dx_type(location_metadata)
 
     # Get information about the project at that location
-    project_metadata <- dx_get_project_metadata(location_metadata$project)
+    project_metadata <- dx_get_project_metadata(location_metadata$project[1]) # [1] in case duplicate files
 
     # Make sure we have at necessary permissions
     assert_dx_project_permissions(project_metadata, "CONTRIBUTE")
 
     # Defer to 'exists' argument if file already exists on the target location
-    if (!(dx_type(location_metadata) %in% c("none", "folder"))) {
+    if (length(location_type) > 1 || !(dx_type(location_metadata) %in% c("none", "folder"))) {
       if (exists == "error") {
         stop("Data already exists on DNAnexus at ", remote_path)
       } else if (exists == "skip") {
@@ -65,17 +66,34 @@ dx_upload <- function(local_path, remote_path=".", exists="replace", silent=FALS
         if (dx_user_can_rm(project_metadata)) {
           msg <- suppressWarnings(system(sprintf("dx rm -rfa '%s' 2>&1", remote_path), intern=TRUE))
           if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n")) # Something has gone wrong, we should be able to 'dx rm'
-          if (!silent) cat(remote_path, "on DNAnexus deleted\n")
-        } else {
-          msg <- suppressWarnings(system(sprintf("dx mv '%s' %s:trash/ 2>&1", remote_path, location_metadata$project), intern=TRUE))
-          if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n")) # Something has gone wrong, we should be able to 'dx mv'
-          if (grepl(":", remote_path)) {
-            if (!silent) {
-              cat(sep="", remote_path, " on DNAnexus moved to ", location_metadata$project, ":/trash/\n")
+          if (!silent) {
+            for (fid in location_metadata$id) {
+              cat(sep="", remote_path, " on DNA nexus delete (file ID: ", fid, ")\n")
             }
-          } else {
+          }
+        } else {
+          for (ii in seq_along(location_metadata$id)) {
+            if (length(location_metadata$id) == 1) {
+              msg <- suppressWarnings(system(sprintf(
+                "dx mv '%s' %s:trash/ 2>&1",
+                remote_path, location_metadata$project
+              ), intern=TRUE))
+            } else {
+              msg <- suppressWarnings(system(sprintf(
+                "dx mv '%s:%s' %s:trash/ 2>&1",
+                location_metadata$project[ii], location_metadata$id[ii],
+                location_metadata$project[ii]
+              ), intern=TRUE))
+            }
+            if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n")) # Something has gone wrong, we should be able to 'dx mv'
             if (!silent) {
-              cat(remote_path, "on DNAnexus moved to trash/\n")
+              if (grepl(":", remote_path)) {
+                cat(sep="", remote_path, " (file ID: ", location_metadata$id[ii],
+                    ") moved to ", location_metadata$project[ii], ":/trash/\n")
+              } else {
+                cat(sep="", remote_path, " (file ID: ", location_metadata$id[ii],
+                    ") moved to trash/ on DNAnexus project\n")
+              }
             }
           }
         }
@@ -136,13 +154,13 @@ dx_upload <- function(local_path, remote_path=".", exists="replace", silent=FALS
       # Get project metadata and check we have CONTRIBUTE permissions, this
       # only needs to be done once not for every file
       if (ii == 1) {
-        project_metadata <- dx_get_project_metadata(remote_metadata$project)
+        project_metadata <- dx_get_project_metadata(remote_metadata$project[1])
         assert_dx_project_permissions(project_metadata, "CONTRIBUTE")
       }
 
       # Handle existing files based on the "exists" argument
       remote_type <- dx_type(remote_metadata)
-      if (!(remote_type %in% c("none", "folder"))) {
+      if (length(remote_type) > 1 || !(remote_type %in% c("none", "folder"))) {
         if (exists == "error") {
           # Exit at first error, no need to check every file
           stop("Data already exists on DNAnexus at ", file_list$remote_path[ii])
@@ -152,20 +170,38 @@ dx_upload <- function(local_path, remote_path=".", exists="replace", silent=FALS
                 file_list$remote_path[ii], "\n")
           }
         } else if (exists == "replace") {
+
           if (dx_user_can_rm(project_metadata)) {
             msg <- suppressWarnings(system(sprintf("dx rm -rfa '%s' 2>&1", file_list$remote_path[ii]), intern=TRUE))
             if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n")) # Something has gone wrong, we should be able to 'dx rm'
-            if (!silent) cat(file_list$remote_path[ii], "on DNAnexus deleted\n")
-          } else {
-            msg <- suppressWarnings(system(sprintf("dx mv '%s' %s:trash/ 2>&1", file_list$remote_path[ii], remote_metadata$project), intern=TRUE))
-            if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n")) # Something has gone wrong, we should be able to 'dx mv'
-            if (grepl(":", remote_path)) {
-              if (!silent) {
-                cat(sep="", file_list$remote_path[ii], " on DNAnexus moved to ", remote_metadata$project, ":/trash/\n")
+            if (!silent) {
+              for (fid in location_metadata$id) {
+                cat(sep="", file_list$remote_path[ii], " on DNA nexus delete (file ID: ", fid, ")\n")
               }
-            } else {
+            }
+          } else {
+            for (ii in seq_along(location_metadata$id)) {
+              if (length(location_metadata$id) == 1) {
+                msg <- suppressWarnings(system(sprintf(
+                  "dx mv '%s' %s:trash/ 2>&1",
+                  file_list$remote_path[ii], location_metadata$project
+                ), intern=TRUE))
+              } else {
+                msg <- suppressWarnings(system(sprintf(
+                  "dx mv '%s:%s' %s:trash/ 2>&1",
+                  location_metadata$project[ii], location_metadata$id[ii],
+                  location_metadata$project[ii]
+                ), intern=TRUE))
+              }
+              if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n")) # Something has gone wrong, we should be able to 'dx mv'
               if (!silent) {
-                cat(file_list$remote_path[ii], "on DNAnexus moved to trash/\n")
+                if (grepl(":", file_list$remote_path[ii])) {
+                  cat(sep="", file_list$remote_path[ii], " (file ID: ", location_metadata$id[ii],
+                      ") moved to ", location_metadata$project[ii], ":/trash/\n")
+                } else {
+                  cat(sep="", file_list$remote_path[ii], " (file ID: ", location_metadata$id[ii],
+                      ") moved to trash/ on DNAnexus project\n")
+                }
               }
             }
           }

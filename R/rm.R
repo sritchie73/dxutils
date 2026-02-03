@@ -65,13 +65,14 @@ dx_rm <- function(remote_path, not_exists="ignore") {
     msg <- suppressWarnings(system(sprintf("dx mkdir -p %s:trash 2>&1", project_id), intern=TRUE))
     if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n")) # Something has gone wrong, we should be able to 'dx mv'
 
-    # Extract information about the remote location if we haven't already
+    # Extract information about the remote location
     if (!exists('entity_metadata')) {
       entity_metadata <- dx_get_metadata(remote_path)
     }
+    entity_type <- dx_type(entity_metadata)
 
     # Are we dealing with a file or a folder?
-    if (dx_type(entity_metadata) == "folder") {
+    if (length(entity_type) == 1 && entity_type == "folder") {
       # Unlike files, we can't have multiple folders with the same name in one
       # location, so to prevent conflicts in trash/ we attached the date and
       # time to the folder name before moving to trash/
@@ -81,11 +82,19 @@ dx_rm <- function(remote_path, not_exists="ignore") {
       msg <- suppressWarnings(system(sprintf("dx mv '%s-%s' %s:trash/ 2>&1", remote_path, uid, project_id), intern=TRUE))
       if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
     } else {
-      # Multiple files with the same name can exist in one location on DNAnexus
-      # by design - as they are distinguished by file ID not name. So we can
-      # just move any file to trash/ without needing to rename
-      msg <- suppressWarnings(system(sprintf("dx mv '%s' %s:trash/ 2>&1", remote_path, entity_metadata$project), intern=TRUE))
-      if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
+      if (length(entity_metadata$name) == 1) {
+        # Multiple files with the same name can exist in one location on DNAnexus
+        # by design - as they are distinguished by file ID not name. So we can
+        # just move any file to trash/ without needing to rename
+        msg <- suppressWarnings(system(sprintf("dx mv '%s' %s:trash/ 2>&1", remote_path, entity_metadata$project), intern=TRUE))
+        if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
+      } else {
+        # If we're deleting multiple files of the same name, move by ID to trash/
+        for (fid in entity_metadata$id) {
+          msg <- suppressWarnings(system(sprintf("dx mv '%s:%s' %s:trash/ 2>&1", entity_metadata$project, fid, entity_metadata$project), intern=TRUE))
+          if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
+        }
+      }
     }
   }
 }

@@ -62,7 +62,7 @@ dx_normalize_path <- function(remote_path, return_as_parts=FALSE) {
   # folder containing the remote folder). The only time we can't take this
   # approach is when the remote_path is "project-ID:/" or "project-ID:" as then
   # dirname() will return "." instead of "/".
-  if (grepl(":", remote_path) && !grepl("(:/$)|(:$)", remote_path)) {
+  if (grepl(":", remote_path) && !grepl("(:/)|(:$)|", remote_path)) {
     remote_path <- gsub(":", ":/", remote_path)
   }
   if (grepl("(:$)|(/$)", remote_path)) {
@@ -132,6 +132,9 @@ dx_normalize_path <- function(remote_path, return_as_parts=FALSE) {
     } else {
       dirname <- dirname(abs_path)
       basename <- basename(abs_path)
+    }
+    if (grepl(":$", dirname)) {
+      dirname <- paste0(dirname, "/")
     }
     return(list(
       project_id=gsub("^(project-[0123456789BFGJKPQVXYZbfgjkpqvxyz]{24}).*", "\\1", dirname),

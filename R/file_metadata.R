@@ -48,16 +48,12 @@ dx_get_metadata <- function(remote_path) {
   }
 
   # Get the metadata associated with the object at the remote_path:
-  metadata <- suppressWarnings(system(sprintf("dx describe '%s' --json 2>&1", remote_path), intern=TRUE))
-  if (!is.null(attr(metadata, "status"))) {
-    if (grepl("dxpy.exceptions.DXCLIError: No match found", metadata[1])) {
-      # Can 'dx ls' remote_path but not 'dx describe' - must therefore be folder
-      return(c(dx_normalize_path(remote_path, return_as_parts=TRUE), class="folder"))
-    } else if (grepl("dxpy.exceptions.DXCLIError: More than one match found", metadata[1])) {
-      stop("Multiple copies of ", remote_path, " found, unable to continue")
-    } else {
-      stop(paste(metadata, collapse="\n")) # Some other error, e.g. contacting servers
-    }
+  metadata <- suppressWarnings(system(sprintf("dx describe '%s' --json --mult 2>&1", remote_path), intern=TRUE))
+  if (!is.null(attr(metadata, "status"))) stop(paste(metadata, collapse="\n"))
+
+  # If folder metadata is "[]"
+  if (length(metadata) == 1 && metadata == "[]") {
+    return(c(dx_normalize_path(remote_path, return_as_parts=TRUE), class="folder"))
   }
 
   # parse JSON to list
@@ -66,33 +62,42 @@ dx_get_metadata <- function(remote_path) {
   # If the file is in the open state check whether it has an uploaded_by
   # property matching the current DNAnexus job ID, in which case we remove
   # the file
-  if (
-    metadata$state == "open" && Sys.getenv("DX_JOB_ID") == "" &&
-    "uploaded_by" %in% names(metadata$properties) &&
-    dx_is_job_id(metadata$properties$uploaded_by) &&
-    metadata$properties$uploaded_by == Sys.getenv("DX_JOB_ID")
-  ) {
-    if (dx_user_can_rm()) {
-      # Remove file, do not error if the file doesn't exist (matching 'rm -f')
-      msg <- suppressWarnings(system(sprintf("dx rm -rfa '%s' 2>&1", remote_path), intern=TRUE))
-      if (!is.null(attr(msg, "status"))) {
-        if (!grepl("Could not resolve", msg[1])) {
-          stop(paste(msg, collapse="\n"))
+  for (ii in seq_along(metadata$state)) { # in case multiple files with same name
+    if (
+      metadata$state[ii] == "open" && Sys.getenv("DX_JOB_ID") == "" &&
+      "uploaded_by" %in% names(metadata$properties) &&
+      dx_is_job_id(metadata$properties$uploaded_by[ii]) &&
+      metadata$properties$uploaded_by[ii] == Sys.getenv("DX_JOB_ID")
+    ) {
+      if (dx_user_can_rm()) {
+        # Remove file, do not error if the file doesn't exist (matching 'rm -f')
+        msg <- suppressWarnings(system(sprintf("dx rm -rfa '%s' 2>&1", metadata$id[ii]), intern=TRUE))
+        if (!is.null(attr(msg, "status"))) {
+          if (!grepl("Could not resolve", msg[1])) {
+            stop(paste(msg, collapse="\n"))
+          }
         }
+      } else {
+        # If these commands fail, something has gone wrong - we should have 'dx mv'
+        # permissions if the file was created by this job id
+        msg <- suppressWarnings(system(sprintf("dx mkdir -p %s:trash 2>&1", metadata$project), intern=TRUE))
+        if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
+        msg <- suppressWarnings(system(sprintf("dx mv '%s' %s:trash/ 2>&1", metadata$id[ii], metadata$project), intern=TRUE))
+        if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
       }
-    } else {
-      # If these commands fail, something has gone wrong - we should have 'dx mv'
-      # permissions if the file was created by this job id
-      msg <- suppressWarnings(system(sprintf("dx mkdir -p %s:trash 2>&1", metadata$project), intern=TRUE))
-      if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
-      msg <- suppressWarnings(system(sprintf("dx mv '%s' %s:trash/ 2>&1", remote_path, metadata$project), intern=TRUE))
-      if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
+      metadata$class[ii] <- "none"
     }
-    return("none")
   }
 
-  # Return the object metadata
-  return(metadata)
+  # Remove deleted items, if any
+  metadata <- metadata[metadata$class != "none",]
+
+  # Return the object metadata, or equivalent metadata for type 'none'
+  if (nrow(metadata) == 0) {
+    return(c(dx_normalize_path(remote_path, return_as_parts=TRUE), class="none"))
+  } else {
+    return(metadata)
+  }
 }
 
 #' Determine the type of entity at a location on a DNAnexus project from metadata
@@ -121,7 +126,7 @@ dx_type <- function(metadata) {
 dx_state <- function(metadata) {
   # Extract relevant information
   type <- dx_type(metadata)
-  if (type %in% c("none", "folder")) {
+  if (length(type) == 1 && type %in% c("none", "folder")) {
     return(type)
   } else {
     return(metadata$state) # "closed", "closing", or "open"
@@ -135,12 +140,13 @@ dx_state <- function(metadata) {
 #'
 #' @returns a DNAnexus path with syntax 'project-ID:/path/to/file.ext'
 dx_path_from_metadata <- function(metadata) {
-  if (metadata$folder == "/") {
-    fmt <- "%s:%s%s"
+  if (length(metadata$folder) > 1) {
+    sprintf("%s:%s", metadata$project, metadata$id)
+  } else if (metadata$folder == "/") {
+    sprintf("%s:%s%s", metadata$project, metadata$folder, metadata$name)
   } else {
-    fmt <- "%s:%s/%s"
+    sprintf("%s:%s/%s", metadata$project, metadata$folder, metadata$name)
   }
-  sprintf(fmt, metadata$project, metadata$folder, metadata$name)
 }
 
 #' Check whether a file or folder exists on a DNAnexus project
@@ -163,9 +169,9 @@ dx_exists <- function(remote_path, incomplete=TRUE) {
   metadata <- dx_get_metadata(remote_path)
   remote_state <- dx_state(metadata)
 
-  if (remote_state == "none") {
+  if (any(remote_state == "none")) {
     return(FALSE)
-  } else if (remote_state == "open") {
+  } else if (all(remote_state == "open")) {
     return(incomplete)
   } else {
     return(TRUE)

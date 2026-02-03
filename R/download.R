@@ -45,7 +45,7 @@ dx_download <- function(remote_path, local_path=".", exists="skip", missing="err
     # Determine if its a file, folder, or points to something that doesn't exist
     type <- dx_type(metadata)
 
-    if (type == "none") {
+    if (length(type) == 1 && type == "none") {
       # If the nothing exists (yet) at 'remote_path', either throw an error
       # if 'missing' is set to "error", return 'NULL' if 'missing' is set to
       # "skip", or wait for 10s before checking again if 'missing' is set to
@@ -64,11 +64,17 @@ dx_download <- function(remote_path, local_path=".", exists="skip", missing="err
         Sys.sleep(10)
         next
       }
-    } else if (type != "folder") {
+    } else if (length(type) > 1 || type != "folder") {
       # 'remote_path' points to a single file/object
 
       # Extract the state of the file or object
       state <- dx_state(metadata)
+
+      # Check that we don't have multiple files with the same name
+      if (length(state) > 1) {
+        stop("Multiple files with same file path found at ", remote_path, ":\n",
+             paste("    ", paste(remote_path, ":", metadata$id), collapse="\n"))
+      }
 
       # If the file is in the 'open' state, defer to the 'incomplete' setting
       if (state == "open") {
@@ -159,13 +165,48 @@ dx_download <- function(remote_path, local_path=".", exists="skip", missing="err
         return(local_path)
       }
 
-    } else {
+    } else { # GOTO HERE
       # 'remote_path' is a folder to download
 
       # Get information about all the files at the remote_path
       file_list_metadata <- suppressWarnings(system(sprintf("dx find data --path '%s' --json 2>&1", remote_path), intern=TRUE))
       if (!is.null(attr(file_list_metadata, "status"))) stop(paste(file_list_metadata, collapse="\n"))
       file_list_metadata <- fromJSON(file_list_metadata)
+
+      # Get the absolute remote path of each file
+      file_list_metadata$remote_path <- paste0(
+        file_list_metadata$project, ":",
+        gsub("^/$", "", file_list_metadata$describe$folder), "/",
+        file_list_metadata$describe$name
+      )
+
+      # Determine location to download each file to
+      if (grepl("/$", remote_path)) {
+        remote_root <- sprintf("^%s%s", metadata$folder, metadata$name)
+      } else if (metadata$folder != "/") {
+        remote_root <- sprintf("^%s", metadata$folder)
+      } else {
+        remote_root <- "^"
+      }
+
+      # Determine the local path for each download
+      file_list_metadata$local_path <- paste0(
+        gsub("/$", "", local_path),
+        gsub(remote_root, "", file_list_metadata$describe$folder),
+        "/", file_list_metadata$describe$name
+      )
+      file_list_metadata$local_path <- gsub("^\\./", "", file_list_metadata$local_path)
+      if (local_path == "") file_list_metadata$local_path <- gsub("^/", "", file_list_metadata$local_path)
+
+      # Check for duplicate files that mean we can't proceed
+      if (length(file_list_metadata) > 0) {
+        dups <- unique(file_list_metadata$local_path[duplicated(file_list_metadata$local_path)])
+        if (length(dups) > 0) {
+          dups <- file_list_metadata[file_list_metadata$local_path %in% dups,]
+          stop("Multiple files with the same file path found at ", remote_path, ":\n",
+               paste("    ", paste(dups$remote_path, ":", dups$id), collapse="\n"))
+        }
+      }
 
       # Check if any are in the open state, and if they are, check whether any
       # have a "uploaded_by" property matching the current DNAnexus job ID.
@@ -222,28 +263,6 @@ dx_download <- function(remote_path, local_path=".", exists="skip", missing="err
         Sys.sleep(10)
         next
       }
-
-      # Determine location to download each file to
-      if (grepl("/$", remote_path)) {
-        remote_root <- sprintf("^%s%s/", metadata$folder, metadata$name)
-      } else if (metadata$folder != "/") {
-        remote_root <- sprintf("^%s/", metadata$folder)
-      } else {
-        remote_root <- "^/"
-      }
-
-      # Get the absolute remote path of each file
-      file_list_metadata$remote_path <- paste0(
-        file_list_metadata$project, ":",
-        gsub("^/$", "", file_list_metadata$describe$folder), "/",
-        file_list_metadata$describe$name
-      )
-
-      file_list_metadata$local_path <- paste0(
-        gsub("/$", "", local_path), "/",
-        gsub(remote_root, "", file_list_metadata$describe$folder),
-        "/", file_list_metadata$describe$name
-      )
 
       # Check whether any of these files already exist, in accordance with the
       # 'exists' argument

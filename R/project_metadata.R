@@ -1,17 +1,20 @@
 #' Get the metadata associated with a DNAnexus project
 #'
-#' @inheritParams normalized_remote_path
+#' @inheritParams remote_path
 #'
 #' @returns a named list containing the project metadata obtained from the
 #'   output of `dx describe --json`
 #'
 #' @importFrom jsonlite fromJSON
-dx_get_project_metadata <- function(normalized_remote_path) {
+dx_get_project_metadata <- function(remote_path) {
   # Determine the ID or name of the project associated with the remote path
-  project_id <- dx_extract_project_id(normalized_remote_path)
+  if (dx_is_data_id(remote_path)) {
+    remote_path <- dx_normalize_path(remote_path)
+  }
+  project <- gsub("^(.*?):.+", "\\1", remote_path)
 
   # Get the metadata associated with the project
-  metadata <- suppressWarnings(system(sprintf("dx describe '%s:' --json 2>&1", project_id), intern=TRUE))
+  metadata <- suppressWarnings(system(sprintf("dx describe '%s:' --json 2>&1", project), intern=TRUE))
   if (!is.null(attr(metadata, "status"))) stop(paste(metadata, collapse="\n")) # Some other error, e.g. contacting servers
 
   return(fromJSON(metadata))

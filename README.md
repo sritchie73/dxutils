@@ -51,6 +51,9 @@ and restarted by AWS ([learn more](https://dnanexus.gitbook.io/uk-biobank-rap/wo
     
 - `assert_dx_exists()`: wrapper for `dx_exists()` that throws an error if 
   `dx_exists()` returns `FALSE`.
+  
+- `dx_normalize_path()`: get the absolute path on DNAnexus of a user-supplied
+  location in the format "project-id:/path/to/file.txt"
 
 # Installation
 

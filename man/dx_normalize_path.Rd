@@ -7,8 +7,10 @@
 dx_normalize_path(remote_path, return_as_parts = FALSE)
 }
 \arguments{
-\item{remote_path}{a DNAnexus file/folder path with syntax
-"projectID:/folder/path", "/folder/path", or "folder/path".}
+\item{remote_path}{DNAnexus file identifier or DNAnexus file/folder path
+(Syntax: "projectID:/folder/path", "/folder/path", or "folder/path").
+Paths are relative to the current working directory in the current project
+unless otherwise specified.}
 
 \item{return_as_parts}{logical; if TRUE, returns the result as a named list
 containing the project ID, folder, and name.}
@@ -18,13 +20,4 @@ a DNAnexus path with syntax 'project-ID:/path/to/file.ext'
 }
 \description{
 Get the standardized absolute format of a remote path on DNAnexus
-}
-\details{
-This is designed as a low-level helper function - i.e. it avoids making
-expensive DNAnexus API calls to 'dx describe' to work out what is at the
-remote_path.
-
-If the remote_path is a DNAnexus object identifier rather than a path,
-you need to use the \code{dx_path_from_metadata} function after extracting the
-object metadata using the \code{dx_get_metadata} function.
 }

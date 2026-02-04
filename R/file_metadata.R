@@ -67,7 +67,7 @@ dx_get_metadata <- function(remote_path) {
   }
 
   # parse JSON to list
-  metadata <- fromJSON(metadata)
+  metadata <- fromJSON(metadata, simplifyVector=FALSE)
 
   # If the file is in the open state check whether it has an uploaded_by
   # property matching the current DNAnexus job ID, in which case we remove

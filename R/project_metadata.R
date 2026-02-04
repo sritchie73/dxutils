@@ -17,7 +17,7 @@ dx_get_project_metadata <- function(remote_path) {
   metadata <- suppressWarnings(system(sprintf("dx describe '%s:' --json 2>&1", project), intern=TRUE))
   if (!is.null(attr(metadata, "status"))) stop(paste(metadata, collapse="\n")) # Some other error, e.g. contacting servers
 
-  return(fromJSON(metadata))
+  return(fromJSON(metadata, simplifyVector=FALSE))
 }
 
 #' Determine access permissions of a DNAnexus project

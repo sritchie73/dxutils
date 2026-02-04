@@ -38,11 +38,11 @@ dx_upload <- function(local_path, remote_path=".", exists="replace", silent=FALS
   if (!dir.exists(local_path)) {
     # We are uploading a file
 
-    # Determine destination location - if and only if remote path ends in a "/"
-    # do we treat it as a folder we want to upload the local_path file to
+    # Determine destination location - if remote path ends in a "/" or ":"
+    # we treat it as a folder we want to upload the local_path file to
     if (remote_path == ".") {
       remote_path <- basename(local_path)
-    } else if (grepl("/$", remote_path)) {
+    } else if (grepl("/$", remote_path) || grepl("(?<!\\\\):$", remote_path, perl = TRUE)) {
       remote_path <- paste0(remote_path, basename(local_path))
     }
 
@@ -52,7 +52,7 @@ dx_upload <- function(local_path, remote_path=".", exists="replace", silent=FALS
 
     # Find out if anything exists already at the target location
     location_metadata <- dx_get_metadata(normalized_remote_path)
-    location_type <- dx_type(normalized_remote_path)
+    location_type <- dx_type(location_metadata)
 
     # Get information about the project at that location
     project_metadata <- dx_get_project_metadata(location_metadata$project[1]) # [1] in case duplicate files
@@ -109,15 +109,15 @@ dx_upload <- function(local_path, remote_path=".", exists="replace", silent=FALS
     if (dx_is_job()) {
       file_id <- suppressWarnings(system(sprintf(
         "dx upload '%s' --destination '%s' --parents --brief --property uploaded_by=$DX_JOB_ID",
-        local_path, remote_path
+        local_path, normalized_remote_path
       ), intern=TRUE))
     } else {
       file_id <- suppressWarnings(system(sprintf(
         "dx upload '%s' --destination '%s' --parents --brief",
-        local_path, remote_path
+        local_path, normalized_remote_path
       ), intern=TRUE))
     }
-    if (!is.null(attr(file_id, "status"))) stop(paste(file_id, collapse="\n")) # Something has gone wrong, we should be able to 'dx mv'
+    if (!is.null(attr(file_id, "status"))) stop(paste(file_id, collapse="\n")) # Something has gone wrong, e.g. connection to server
     if (!silent) {
       cat(local_path, "uploaded to DNAnexus at", remote_path, "with file ID", file_id, "\n")
     }

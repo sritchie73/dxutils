@@ -41,8 +41,8 @@ dx_rm <- function(remote_path, not_exists="ignore") {
   } else {
     normalized_remote_path <- dx_normalize_path(remote_path)
   }
-  project_id <- dx_extract_project_id(normalized_remote_path)
-  project_metadata <- dx_get_project_metadata(normalized_remote_path)
+  project_id <- gsub("^(.*?):.*", "\\1", remote_path)
+  project_metadata <- dx_get_project_metadata(remote_path)
 
   # Check we have permissions to delete (or at least move) files in this
   # project

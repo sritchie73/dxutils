@@ -20,7 +20,6 @@ NULL
 #'    containing the project ID, folder, and name.
 #'
 #' @returns a DNAnexus path with syntax 'project-ID:/path/to/file.ext'
-#' @export
 dx_normalize_path <- function(remote_path, return_as_parts=FALSE) {
 
   if (dx_is_data_id(remote_path)) {
@@ -29,7 +28,7 @@ dx_normalize_path <- function(remote_path, return_as_parts=FALSE) {
     metadata <- dx_get_metadata(remote_path)
     abs_path <- dx_path_from_metadata(metadata)
 
-  } else if (grepl(":", remote_path)) {
+  } else if (dx_path_contains_project(remote_path)) {
     # Remote path already has the project name or ID as part of the path
     project <- gsub("^(.*?):.+", "\\1", remote_path)
 
@@ -101,4 +100,17 @@ dx_normalize_path <- function(remote_path, return_as_parts=FALSE) {
       name=basename
     ))
   }
+}
+
+#' Does the user-provided remote path contain the project name or ID?
+#'
+#' Returns TRUE if the remote path contains a colon (":") and that colon is
+#' not escaped ("\:") (which is the case for files or folders on DNAnexus that
+#' contain a colon).
+#'
+#' @inheritParams remote_path
+#'
+#' @returns TRUE or FALSE
+dx_path_contains_project <- function(remote_path) {
+  grepl("(?<!\\\\):", remote_path, perl = TRUE)
 }

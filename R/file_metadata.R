@@ -36,6 +36,16 @@ NULL
 #'
 #' @importFrom jsonlite fromJSON
 dx_get_metadata <- function(remote_path) {
+
+  # We need to get the absolute remote_path if it doesn't already have the
+  # project name or information in it, particularly if we are on a cloud
+  # workstation where the DNAnexus command line tools take relative paths as
+  # relative to the container project, when we really want to access the
+  # upstream project storage
+  if (!dx_path_contains_project(remote_path)) {
+    remote_path <- dx_normalize_path(remote_path)
+  }
+
   # Check if we can resolve the given remote_path to a location on DNAnexus
   exists <- suppressWarnings(system(sprintf("dx ls '%s' 2>&1", remote_path), intern=TRUE))
   if (!is.null(attr(exists, "status"))) {

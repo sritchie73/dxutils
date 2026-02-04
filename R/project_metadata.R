@@ -8,7 +8,7 @@
 #' @importFrom jsonlite fromJSON
 dx_get_project_metadata <- function(remote_path) {
   # Determine the ID or name of the project associated with the remote path
-  if (dx_is_data_id(remote_path)) {
+  if (!dx_path_contains_project(remote_path)) {
     remote_path <- dx_normalize_path(remote_path)
   }
   project <- gsub("^(.*?):.+", "\\1", remote_path)

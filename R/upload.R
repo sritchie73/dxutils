@@ -46,9 +46,13 @@ dx_upload <- function(local_path, remote_path=".", exists="replace", silent=FALS
       remote_path <- paste0(remote_path, basename(local_path))
     }
 
+    # Convert remote_path to an absolute path, primarily so we can bypass any
+    # wrapping job container to interface with project storage on running jobs
+    normalized_remote_path <- dx_normalize_path(remote_path)
+
     # Find out if anything exists already at the target location
-    location_metadata <- dx_get_metadata(remote_path)
-    location_type <- dx_type(location_metadata)
+    location_metadata <- dx_get_metadata(normalized_remote_path)
+    location_type <- dx_type(normalized_remote_path)
 
     # Get information about the project at that location
     project_metadata <- dx_get_project_metadata(location_metadata$project[1]) # [1] in case duplicate files
@@ -68,7 +72,7 @@ dx_upload <- function(local_path, remote_path=".", exists="replace", silent=FALS
           if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n")) # Something has gone wrong, we should be able to 'dx rm'
           if (!silent) {
             for (fid in location_metadata$id) {
-              cat(sep="", remote_path, " on DNA nexus delete (file ID: ", fid, ")\n")
+              cat(sep="", remote_path, " on DNA nexus deleted (file ID: ", fid, ")\n")
             }
           }
         } else {
@@ -102,7 +106,7 @@ dx_upload <- function(local_path, remote_path=".", exists="replace", silent=FALS
 
     # Now upload the file - make sure we attach current the DNA nexus job ID as
     # the uploaded_by property
-    if (Sys.getenv("DX_JOB_ID") != "") {
+    if (dx_is_job()) {
       file_id <- suppressWarnings(system(sprintf(
         "dx upload '%s' --destination '%s' --parents --brief --property uploaded_by=$DX_JOB_ID",
         local_path, remote_path

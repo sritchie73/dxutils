@@ -3,7 +3,6 @@
 export(assert_dx_exists)
 export(dx_download)
 export(dx_exists)
-export(dx_normalize_path)
 export(dx_rm)
 export(dx_upload)
 importFrom(jsonlite,fromJSON)

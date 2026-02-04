@@ -20,6 +20,8 @@ NULL
 #'    containing the project ID, folder, and name.
 #'
 #' @returns a DNAnexus path with syntax 'project-ID:/path/to/file.ext'
+#'
+#' @importFrom utils read.table
 dx_normalize_path <- function(remote_path, return_as_parts=FALSE) {
 
   if (dx_is_data_id(remote_path)) {
@@ -30,7 +32,7 @@ dx_normalize_path <- function(remote_path, return_as_parts=FALSE) {
 
   } else if (dx_path_contains_project(remote_path)) {
     # Remote path already has the project name or ID as part of the path
-    project <- gsub("^(.*?):.+", "\\1", remote_path)
+    project <- gsub("^(.*?):.*", "\\1", remote_path)
 
     # Standardise the rest of the path
     rel_path <- gsub("^.*?:", "", remote_path)
@@ -85,21 +87,19 @@ dx_normalize_path <- function(remote_path, return_as_parts=FALSE) {
   if (!return_as_parts) {
     return(abs_path)
   } else {
-    if (grepl("(/$)|(:$)", abs_path)) {
-      dirname <- abs_path
+    project_id <- gsub("^(project-[0123456789BFGJKPQVXYZbfgjkpqvxyz]{24}).*", "\\1", abs_path)
+    rel_path <- gsub("project-[0123456789BFGJKPQVXYZbfgjkpqvxyz]{24}:", "", abs_path)
+    if (rel_path == "/") {
+      dirname <- "/"
       basename <- ""
     } else {
-      dirname <- dirname(abs_path)
-      basename <- basename(abs_path)
+      dirname <- dirname(rel_path)
+      basename <- basename(rel_path)
+      if (grepl("/$", rel_path)) {
+        basename <- paste0(basename, "/")
+      }
     }
-    if (grepl(":$", dirname)) {
-      dirname <- paste0(dirname, "/")
-    }
-    return(list(
-      project_id=gsub("^(project-[0123456789BFGJKPQVXYZbfgjkpqvxyz]{24}).*", "\\1", dirname),
-      folder=gsub("project-[0123456789BFGJKPQVXYZbfgjkpqvxyz]{24}:", "", dirname),
-      name=basename
-    ))
+    return(list("project_id"=project_id, "folder"=dirname, "name"=basename))
   }
 }
 

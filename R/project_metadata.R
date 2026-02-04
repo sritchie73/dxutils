@@ -15,9 +15,14 @@ dx_get_project_metadata <- function(remote_path) {
 
   # Get the metadata associated with the project
   metadata <- suppressWarnings(system(sprintf("dx describe '%s:' --json 2>&1", project), intern=TRUE))
-  if (!is.null(attr(metadata, "status"))) stop(paste(metadata, collapse="\n")) # Some other error, e.g. contacting servers
-
-  return(fromJSON(metadata, simplifyVector=FALSE))
+  if (!is.null(attr(metadata, "status"))) {
+    if (grepl("dxpy.exceptions.DXCLIError: No match found for", metadata[1])) {
+      stop("could not find project '", project, "' on DNAnexus")
+    } else {
+      stop(paste(metadata, collapse="\n")) # Some other error, e.g. contacting servers
+    }
+  }
+  return(fromJSON(metadata))
 }
 
 #' Determine access permissions of a DNAnexus project

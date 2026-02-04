@@ -1,3 +1,15 @@
+#' Check whether a string matches the format of a DNAnexus project ID
+#'
+#' See <https://documentation.dnanexus.com/developer/api/entity-ids>
+#'
+#' @param string a character vector of length 1
+#'
+#' @returns TRUE or FALSE
+dx_is_project_id <- function(string) {
+  stopifnot(length(string) == 1 && is.character(string))
+  grepl("^project-[0123456789BFGJKPQVXYZbfgjkpqvxyz]{24}$", string)
+}
+
 #' Get the metadata associated with a DNAnexus project
 #'
 #' @inheritParams remote_path
@@ -17,7 +29,15 @@ dx_get_project_metadata <- function(remote_path) {
   metadata <- suppressWarnings(system(sprintf("dx describe '%s:' --json 2>&1", project), intern=TRUE))
   if (!is.null(attr(metadata, "status"))) {
     if (grepl("dxpy.exceptions.DXCLIError: No match found for", metadata[1])) {
-      stop("could not find project '", project, "' on DNAnexus")
+      if (dx_is_container_job()) {
+        parent_project_id <- Sys.getenv("DX_PROJECT_CONTEXT_ID")
+        parent_metadata <- dx_get_project_metadata(parent_project_id)
+        stop("Unable to connect to project '", project,
+             "', this job only has access to project '", parent_metadata$name,
+             "' (", parent_project_id, ")")
+      } else {
+        stop("could not find project '", project, "' on DNAnexus")
+      }
     } else {
       stop(paste(metadata, collapse="\n")) # Some other error, e.g. contacting servers
     }

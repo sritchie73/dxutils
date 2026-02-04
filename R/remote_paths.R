@@ -48,7 +48,7 @@ dx_normalize_path <- function(remote_path, return_as_parts=FALSE) {
 
     abs_path <- sprintf("%s:%s", project, rel_path)
 
-  } else if (Sys.getenv("DX_JOB_ID") != "" && Sys.getenv("DX_PROJECT_CONTEXT_ID") != Sys.getenv("DX_WORKSPACE_ID")) {
+  } else if (dx_is_container_job()) {
     # We are running on a DNAnexus job that is running within a container, e.g.
     # a cloud workstation. In this case, particularly for 'dx_upload()' we want
     # to bypass the container to access project storage directly. The cloud

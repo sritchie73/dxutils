@@ -6,13 +6,6 @@
 #' @name remote_path
 NULL
 
-#' @param normalized_remote_path DNAnexus file or folder path that has been
-#'    processed by the `dx_normalize_path` function and now has the syntax
-#'    "projectID:/folder/path"
-#'
-#' @name normalized_remote_path
-NULL
-
 #' Get the standardized absolute format of a remote path on DNAnexus
 #'
 #' @inheritParams remote_path

@@ -32,11 +32,20 @@ dx_get_project_metadata <- function(remote_path) {
       if (dx_is_container_job()) {
         parent_project_id <- Sys.getenv("DX_PROJECT_CONTEXT_ID")
         parent_metadata <- dx_get_project_metadata(parent_project_id)
-        stop("unable to connect to project '", project,
-             "', this job only has access to project '", parent_metadata$name,
-             "' (", parent_project_id, ")")
+
+        all_projects <- suppressWarnings(system("dx find projects --level VIEW --json", intern=TRUE))
+        if (!is.null(attr(all_projects, "status"))) stop(paste(all_projects, collapse="\n")) # something has gone wrong, e.g. connecting to server
+        all_projects <- fromJSON(all_projects)
+
+        if (length(all_projects$id) == 1 && all_projects$id == parent_project_id) {
+          stop("Unable to connect to project '", project,
+               "', this job only has access to project '", parent_metadata$name,
+               "' (", parent_project_id, ")")
+        } else {
+          stop("Could not find project '", project, "' on DNAnexus")
+        }
       } else {
-        stop("could not find project '", project, "' on DNAnexus")
+        stop("Could not find project '", project, "' on DNAnexus")
       }
     } else {
       stop(paste(metadata, collapse="\n")) # Some other error, e.g. contacting servers

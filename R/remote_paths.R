@@ -113,5 +113,5 @@ dx_normalize_path <- function(remote_path, return_as_parts=FALSE) {
 #'
 #' @returns TRUE or FALSE
 dx_path_contains_project <- function(remote_path) {
-  grepl("(?<!\\\\):", remote_path, perl = TRUE)
+  dx_is_project_id(remote_id) ||  grepl("(?<!\\\\):", remote_path, perl = TRUE)
 }

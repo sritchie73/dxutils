@@ -96,7 +96,7 @@ assert_dx_project_permissions <- function(metadata, minimum_permissions) {
     } else {
       stop("Insufficient privileges for operation in project '", metadata$name,
            "' (", metadata$id, "): user permissions are ", user_permissions,
-           ", at least ", minimum_permissions, "required")
+           ", at least ", minimum_permissions, " required")
     }
   }
 }

@@ -49,11 +49,12 @@ dx_is_data_id <- function(string) {
 #' @importFrom jsonlite fromJSON
 dx_get_metadata <- function(remote_path) {
 
-  # We need to get the absolute remote_path if it doesn't already have the
-  # project name or information in it, particularly if we are on a cloud
-  # workstation where the DNAnexus command line tools take relative paths as
-  # relative to the container project, when we really want to access the
-  # upstream project storage
+  # If the remote_path is a relative path, we need to use 'dx_normalize_path' to
+  # convert it to an absolute path, primarily so that if we're running inside
+  # containerised job we make sure we're querying the file on project storage,
+  # not looking for it on the container itself where it almost certainly doesn't
+  # exist (unless it is one of the job input files already copied to the local
+  # machine).
   if (!dx_is_data_id(remote_path) && !dx_path_contains_project(remote_path)) {
     remote_path <- dx_normalize_path(remote_path)
   }
@@ -216,8 +217,14 @@ assert_dx_exists <- function(remote_path, incomplete=TRUE) {
   # Just a wrapper over 'dx_exists()' that gives a more informative error
   # message depending on how the user has provided the remote_path.
   if (!dx_exists(remote_path, incomplete)) {
-    if (grepl(":", remote_path) || dx_is_id(remote_path)) {
+    if (dx_path_contains_project(remote_path) || dx_is_data_id(remote_path)) {
       stop("'", remote_path, "' not found on DNAnexus")
+    } else if (dx_is_container_job()) {
+      parent_project <- Sys.getenv("DX_PROJECT_CONTEXT_ID")
+      parent_project_metadata <- dx_get_project_metadata(paste0(parent_project, ":"))
+      stop("'", remote_path, "' not found in project storage attached to the",
+           "current DNAnexus job ('", parent_project_metadata$name, "' : ",
+           parent_project, ")")
     } else {
       stop("'", remote_path, "' not found in current working directory on DNAnexus ('",
            system("dx pwd", intern=TRUE), "')")

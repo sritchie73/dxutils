@@ -85,6 +85,7 @@ assert_dx_project_permissions <- function(metadata, minimum_permissions) {
   if (!(minimum_permissions %in% valid_permissions)) {
     stop("'minimum_permissions' must be one of \"VIEW\", \"CONTRIBUTE\" or \"ADMINISITER\"")
   }
+  minimum_permissions <- ordered(minimum_permissions, levels=c("NONE", "VIEW", "CONTRIBUTE", "ADMINISTER"))
   user_permissions <- dx_get_project_permissions(metadata)
   if (user_permissions < minimum_permissions) {
     if (dx_is_job() && minimum_permissions > "VIEW" && metadata$id != Sys.getenv("DX_PROJECT_CONTEXT_ID")) {

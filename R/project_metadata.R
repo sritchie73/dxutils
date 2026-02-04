@@ -23,7 +23,7 @@ dx_get_project_metadata <- function(remote_path) {
   if (!dx_path_contains_project(remote_path)) {
     remote_path <- dx_normalize_path(remote_path)
   }
-  project <- gsub("^(.*?):.+", "\\1", remote_path)
+  project <- gsub("^(.*?):.*", "\\1", remote_path)
 
   # Get the metadata associated with the project
   metadata <- suppressWarnings(system(sprintf("dx describe '%s:' --json 2>&1", project), intern=TRUE))

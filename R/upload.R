@@ -177,13 +177,14 @@ dx_upload <- function(local_path, remote_path=".", exists="replace", silent=FALS
             cat(sep="", "Skipping upload of '", file_list$local_path[ii], "', data already exists on DNAnexus at '",
                 file_list$remote_path[ii], "'\n")
           }
+          next
         } else if (exists == "replace") {
 
           if (dx_user_can_rm(project_metadata)) {
             msg <- suppressWarnings(system(sprintf("dx rm -rfa '%s' 2>&1", file_list$abs_remote_path[ii]), intern=TRUE))
             if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n")) # Something has gone wrong, we should be able to 'dx rm'
             if (!silent) {
-              for (fid in location_metadata$id) {
+              for (fid in remote_metadata$id) {
                 cat(sep="", "'", file_list$remote_path[ii], "' on DNA nexus deleted (file ID: '", fid, "')\n")
               }
             }
@@ -193,12 +194,11 @@ dx_upload <- function(local_path, remote_path=".", exists="replace", silent=FALS
             if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n")) # Something has gone wrong, we should be able to 'dx mv'
 
             for (jj in seq_along(remote_metadata$id)) {
-              if (length(remote_metadata$id) == 1) {
-                msg <- suppressWarnings(system(sprintf(
-                  "dx mv '%s' %s:trash/ 2>&1",
-                  remote_metadata$id[jj], project_metadata$id
-                ), intern=TRUE))
-              }
+              msg <- suppressWarnings(system(sprintf(
+                "dx mv '%s' %s:trash/ 2>&1",
+                remote_metadata$id[jj], project_metadata$id
+              ), intern=TRUE))
+
               if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n")) # Something has gone wrong, we should be able to 'dx mv'
               if (!silent) {
                 if (dx_path_contains_project(file_list$remote_path[ii])) {

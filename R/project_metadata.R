@@ -92,8 +92,8 @@ assert_dx_project_permissions <- function(metadata, minimum_permissions) {
       parent_metadata <- dx_get_project_metadata(Sys.getenv("DX_PROJECT_CONTEXT_ID"))
       stop("Insufficient privileges for operation in project '", metadata$name,
            "' (", metadata$id, "): DNAnexus jobs only have VIEW permissions in",
-           " projects other than their own ('", parent_metadata$name, "' : ",
-           parent_metadata$id, ")")
+           " projects other than their own parent project ('",
+           parent_metadata$name, "' : ", parent_metadata$id, ")")
     } else {
       stop("Insufficient privileges for operation in project '", metadata$name,
            "' (", metadata$id, "): user permissions are ", user_permissions,

@@ -17,7 +17,7 @@
 #' @name file_states
 NULL
 
-#' Check whether a string matches the format of a DNAnexus data object
+#' Check whether a string matches the format of a DNAnexus data object ID
 #'
 #' See <https://documentation.dnanexus.com/developer/api/entity-ids>
 #'
@@ -26,7 +26,7 @@ NULL
 #' @returns TRUE or FALSE
 dx_is_data_id <- function(string) {
   stopifnot(length(string) == 1 && is.character(string))
-  grepl("^(file)|(applet)|(record)|(app)|(database)-[0123456789BFGJKPQVXYZbfgjkpqvxyz]{24}$", string)
+  grepl("^(file)|(applet)|(record)|(app)|(database)|(workflow)-[0123456789BFGJKPQVXYZbfgjkpqvxyz]{24}$", string)
 }
 
 #' Get the metadata associated with a location on DNAnexus

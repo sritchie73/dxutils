@@ -53,7 +53,8 @@ dx_normalize_path <- function(remote_path, return_as_parts=FALSE) {
     # workstation also does not have the ability to 'dx cd' to the project
     # storage or a different folder within project storage.
     project <- Sys.getenv("DX_PROJECT_CONTEXT_ID")
-    if (!grepl("^/", rel_path)) rel_path <- paste0("/", rel_path)
+    rel_path <- remote_path
+    if (!grepl("^/", remote_path)) rel_path <- paste0("/", rel_path)
 
     abs_path <- sprintf("%s:%s", project, rel_path)
   } else {

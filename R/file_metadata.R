@@ -64,7 +64,11 @@ dx_get_metadata <- function(remote_path) {
   if (!is.null(attr(exists, "status"))) {
     if (grepl("dxpy.utils.resolver.ResolutionError", exists[1])) {
       # Object does not exist
-      return(c(dx_normalize_path(remote_path, return_as_parts=TRUE), class="none"))
+      if (dx_is_data_id(remote_path)) {
+        return(c("id"=remote_path, dx_normalize_path("", return_as_parts=TRUE), class="none"))
+      } else {
+        return(c(id=NA, dx_normalize_path(remote_path, return_as_parts=TRUE), class="none"))
+      }
     } else {
       stop(paste(exists, collapse="\n")) # Some other error (e.g. permissions, connecting to server, etc.)
     }
@@ -76,7 +80,7 @@ dx_get_metadata <- function(remote_path) {
 
   # If folder metadata is "[]"
   if (length(metadata) == 1 && metadata == "[]") {
-    return(c(dx_normalize_path(remote_path, return_as_parts=TRUE), class="folder"))
+    return(c(id=NA, dx_normalize_path(remote_path, return_as_parts=TRUE), class="folder"))
   }
 
   # parse JSON to list
@@ -201,6 +205,29 @@ dx_exists <- function(remote_path, incomplete=TRUE) {
   }
 }
 
+#' Throws an error about the requested object not being found
+#'
+#' Error message dependent on how the user provided the remote_path and whether
+#' the process is running inside a DNAnexus container job.
+#'
+#' @inheritParams remote_path
+#'
+#' @returns always throws an error
+throw_file_not_exists_error <- function(remote_path) {
+  if (dx_path_contains_project(remote_path) || dx_is_data_id(remote_path)) {
+    stop("'", remote_path, "' not found on DNAnexus")
+  } else if (dx_is_container_job()) {
+    parent_project <- Sys.getenv("DX_PROJECT_CONTEXT_ID")
+    parent_project_metadata <- dx_get_project_metadata(paste0(parent_project, ":"))
+    stop("'", remote_path, "' not found in project storage attached to the",
+         "current DNAnexus job ('", parent_project_metadata$name, "' : ",
+         parent_project, ")")
+  } else {
+    stop("'", remote_path, "' not found in current working directory on DNAnexus ('",
+         system("dx pwd", intern=TRUE), "')")
+  }
+}
+
 #' Throw an error if the requested object or folder does not exist on DNAnexus
 #'
 #' @inherit file_states details
@@ -214,20 +241,5 @@ assert_dx_exists <- function(remote_path, incomplete=TRUE) {
   stopifnot(length(remote_path) == 1)
   stopifnot(length(incomplete) == 1 && incomplete %in% c(TRUE, FALSE))
 
-  # Just a wrapper over 'dx_exists()' that gives a more informative error
-  # message depending on how the user has provided the remote_path.
-  if (!dx_exists(remote_path, incomplete)) {
-    if (dx_path_contains_project(remote_path) || dx_is_data_id(remote_path)) {
-      stop("'", remote_path, "' not found on DNAnexus")
-    } else if (dx_is_container_job()) {
-      parent_project <- Sys.getenv("DX_PROJECT_CONTEXT_ID")
-      parent_project_metadata <- dx_get_project_metadata(paste0(parent_project, ":"))
-      stop("'", remote_path, "' not found in project storage attached to the",
-           "current DNAnexus job ('", parent_project_metadata$name, "' : ",
-           parent_project, ")")
-    } else {
-      stop("'", remote_path, "' not found in current working directory on DNAnexus ('",
-           system("dx pwd", intern=TRUE), "')")
-    }
-  }
+  if (!dx_exists(remote_path, incomplete)) throw_file_not_exists_error(remote_path)
 }

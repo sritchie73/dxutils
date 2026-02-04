@@ -21,6 +21,9 @@ dx_normalize_path <- function(remote_path, return_as_parts=FALSE) {
     # If the remote_path is a DNAnexus data object ID, query the object directly
     # to get its metadata
     metadata <- dx_get_metadata(remote_path)
+    if (dx_type(metadata) == "none") {
+      throw_file_not_exists_error(remote_path)
+    }
     abs_path <- dx_path_from_metadata(metadata)
 
   } else if (dx_path_contains_project(remote_path)) {
@@ -92,7 +95,7 @@ dx_normalize_path <- function(remote_path, return_as_parts=FALSE) {
         basename <- paste0(basename, "/")
       }
     }
-    return(list("project_id"=project_id, "folder"=dirname, "name"=basename))
+    return(list("project"=project_id, "folder"=dirname, "name"=basename))
   }
 }
 

@@ -32,7 +32,7 @@ dx_get_project_metadata <- function(remote_path) {
       if (dx_is_container_job()) {
         parent_project_id <- Sys.getenv("DX_PROJECT_CONTEXT_ID")
         parent_metadata <- dx_get_project_metadata(parent_project_id)
-        stop("Unable to connect to project '", project,
+        stop("unable to connect to project '", project,
              "', this job only has access to project '", parent_metadata$name,
              "' (", parent_project_id, ")")
       } else {

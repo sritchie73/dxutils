@@ -41,8 +41,8 @@ dx_rm <- function(remote_path, not_exists="ignore") {
   } else {
     normalized_remote_path <- dx_normalize_path(remote_path)
   }
-  project_id <- gsub("^(.*?):.*", "\\1", remote_path)
-  project_metadata <- dx_get_project_metadata(remote_path)
+  project_id <- gsub("^(.*?):.*", "\\1", normalized_remote_path)
+  project_metadata <- dx_get_project_metadata(normalized_remote_path)
 
   # Check we have permissions to delete (or at least move) files in this
   # project
@@ -52,10 +52,12 @@ dx_rm <- function(remote_path, not_exists="ignore") {
   # of function documentation
   if (dx_user_can_rm(project_metadata)) {
     # Remove file, do not error if the file doesn't exist (matching 'rm -f')
-    msg <- suppressWarnings(system(sprintf("dx rm -rfa '%s' 2>&1", remote_path), intern=TRUE))
+    msg <- suppressWarnings(system(sprintf("dx rm -rfa '%s' 2>&1", normalized_remote_path), intern=TRUE))
     if (!is.null(attr(msg, "status"))) {
       if (grepl("Could not resolve", msg[1])) {
-        if (not_exists == "error") stop(remote_path, " not found on DNAnexus")
+        if (not_exists == "error") {
+          throw_file_not_exists_error(remote_path)
+        }
       } else {
         stop(paste(msg, collapse="\n"))
       }
@@ -67,9 +69,16 @@ dx_rm <- function(remote_path, not_exists="ignore") {
 
     # Extract information about the remote location
     if (!exists('entity_metadata')) {
-      entity_metadata <- dx_get_metadata(remote_path)
+      entity_metadata <- dx_get_metadata(normalized_remote_path)
     }
     entity_type <- dx_type(entity_metadata)
+
+    # Throw an error if the file/folder does not exist
+    if (length(entity_type) == 1 && entity_type == "none") {
+      if (not_exists == "error") {
+        throw_file_not_exists_error(remote_path)
+      }
+    }
 
     # Are we dealing with a file or a folder?
     if (length(entity_type) == 1 && entity_type == "folder") {
@@ -77,16 +86,16 @@ dx_rm <- function(remote_path, not_exists="ignore") {
       # location, so to prevent conflicts in trash/ we attached the date and
       # time to the folder name before moving to trash/
       uid <- format(Sys.time(), "%Y-%m-%d-%H-%M-%S")
-      msg <- suppressWarnings(system(sprintf("dx mv '%s' '%s-%s' 2>&1", remote_path, remote_path, uid), intern=TRUE))
+      msg <- suppressWarnings(system(sprintf("dx mv '%s' '%s-%s' 2>&1", normalized_remote_path, normalized_remote_path, uid), intern=TRUE))
       if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
-      msg <- suppressWarnings(system(sprintf("dx mv '%s-%s' %s:trash/ 2>&1", remote_path, uid, project_id), intern=TRUE))
+      msg <- suppressWarnings(system(sprintf("dx mv '%s-%s' %s:trash/ 2>&1", normalized_remote_path, uid, project_id), intern=TRUE))
       if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
     } else {
       if (length(entity_metadata$name) == 1) {
         # Multiple files with the same name can exist in one location on DNAnexus
         # by design - as they are distinguished by file ID not name. So we can
         # just move any file to trash/ without needing to rename
-        msg <- suppressWarnings(system(sprintf("dx mv '%s' %s:trash/ 2>&1", remote_path, entity_metadata$project), intern=TRUE))
+        msg <- suppressWarnings(system(sprintf("dx mv '%s' %s:trash/ 2>&1", normalized_remote_path, entity_metadata$project), intern=TRUE))
         if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
       } else {
         # If we're deleting multiple files of the same name, move by ID to trash/

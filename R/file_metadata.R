@@ -54,7 +54,7 @@ dx_get_metadata <- function(remote_path) {
   # workstation where the DNAnexus command line tools take relative paths as
   # relative to the container project, when we really want to access the
   # upstream project storage
-  if (!dx_path_contains_project(remote_path)) {
+  if (!dx_is_data_id(remote_path) && !dx_path_contains_project(remote_path)) {
     remote_path <- dx_normalize_path(remote_path)
   }
 

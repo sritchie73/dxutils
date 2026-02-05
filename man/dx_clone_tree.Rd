@@ -4,7 +4,7 @@
 \alias{dx_clone_tree}
 \title{Clone the directory structure from a DNAnexus folder}
 \usage{
-dx_clone_tree(remote_path, local_path, remote_subdir)
+dx_clone_tree(remote_path, local_path, remote_subdir, silent)
 }
 \arguments{
 \item{remote_path}{DNAnexus file identifier or DNAnexus file/folder path
@@ -15,6 +15,9 @@ unless otherwise specified.}
 \item{local_path}{location on the local machine to download the file or folder.}
 
 \item{remote_subdir}{subdirectory relative to the remote_path (see Details)}
+
+\item{silent}{logical; if TRUE does not print message when creating each
+folder}
 }
 \description{
 Clone the directory structure from a DNAnexus folder

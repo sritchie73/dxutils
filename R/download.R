@@ -36,11 +36,19 @@ dx_download <- function(remote_path, local_path=".", exists="skip", missing="err
   stopifnot(length(incomplete) == 1 && incomplete %in% c("error", "skip", "wait"))
   stopifnot(length(silent) == 1 && is.logical(silent) && !is.na(silent))
 
+  # Get the absolute format of the remote_path - particularly important for
+  # bypassing container projects on cloud workstations
+  normalized_remote_path <- dx_normalize_path(remote_path)
+
   # Enter while TRUE loop to handle conditions where we may have to wait
   while (TRUE) {
+    # Get information about the project (i.e. whether we can even connect to
+    # it from this job)
+    project_metadata <- dx_get_project_metadata(normalized_remote_path)
+
     # Get information about whatever is stored at the target location on
     # DNAnexus (if anything)
-    metadata <- dx_get_metadata(remote_path)
+    metadata <- dx_get_metadata(normalized_remote_path)
 
     # Determine if its a file, folder, or points to something that doesn't exist
     type <- dx_type(metadata)
@@ -51,16 +59,12 @@ dx_download <- function(remote_path, local_path=".", exists="skip", missing="err
       # "skip", or wait for 10s before checking again if 'missing' is set to
       # "wait".
       if (missing == "error") {
-        if (grepl(":", remote_path) || dx_is_id(remote_path)) {
-          stop("'", remote_path, "' not found on DNAnexus")
-        } else {
-          stop("'", remote_path, "' not found in current working directory on DNAnexus ('",
-               system("dx pwd", intern=TRUE), "')")
-        }
+        throw_file_not_exists_error(remote_path)
       } else if (missing == "skip") {
         return(invisible(NULL))
       } else if (missing == "wait") {
-        cat(remote_path, "does not exist yet, waiting 10s...\n")
+        assert_dx_project_permissions(project_metadata, "VIEW")
+        cat(sep="", "'", remote_path, "' on DNAnexus does not exist yet, waiting 10s...\n")
         Sys.sleep(10)
         next
       }
@@ -72,18 +76,18 @@ dx_download <- function(remote_path, local_path=".", exists="skip", missing="err
 
       # Check that we don't have multiple files with the same name
       if (length(state) > 1) {
-        stop("Multiple files with same file path found at ", remote_path, ":\n",
-             paste("    ", paste(remote_path, ":", metadata$id), collapse="\n"))
+        stop("Multiple files with same file path found at '", remote_path, "' on DNAnexus:\n",
+             paste(paste0("    '", remote_path, "' : '", metadata$id, "'"), collapse="\n"))
       }
 
       # If the file is in the 'open' state, defer to the 'incomplete' setting
       if (state == "open") {
         if (incomplete == "error") {
-          stop(remote_path, " is an incomplete file still in the process of uploading")
+          stop("'", remote_path, "' is an incomplete file on DNAnexus still in the process of being uploaded by another process")
         } else if (incomplete == "skip") {
           return(invisible(NULL))
         } else if (incomplete == "wait") {
-          cat(remote_path, " is an incomplete file, waiting 10s for upload to finish before trying again...\n")
+          cat(sep="", "'", remote_path, "' is an incomplete file on DNAnexus, waiting 10s for upload to finish before trying again...\n")
           Sys.sleep(10)
           next
         }
@@ -92,7 +96,7 @@ dx_download <- function(remote_path, local_path=".", exists="skip", missing="err
       # If the file is in the 'closing' state, always wait for DNAnexus to
       # finish finalizing the file before downloading
       if (state == "closing") {
-        cat(remote_path, "is in the process of closing, waiting 10s for DNAnexus to finalize the file before trying again...\n")
+        cat(sep="'", remote_path, "' on DNAnexus is in the process of closing, waiting 10s for DNAnexus to finalize the file before trying again...\n")
         Sys.sleep(10)
         next
       }
@@ -114,18 +118,28 @@ dx_download <- function(remote_path, local_path=".", exists="skip", missing="err
         if (exists == "error") {
           if (file.exists(local_path) && !dir.exists(local_path) && basename(local_path) == metadata$name) {
             # 'local_path' points to a file with the same name as the remote file
-            stop("Error downloading ", remote_path, ": ", metadata$name, " already exists on local machine at ", dirname(local_path), "/")
+            stop("Error downloading '", remote_path, "' from DNAnexus: a file already exists on local machine at '", local_path, "'")
           } else if (file.exists(local_path) && dir.exists(local_path)) {
             # 'local_path' points to a folder that contains a file with the same name as the remote file
             if (!grepl("/$", local_path)) local_path <- paste0(local_path, "/")
-            stop("Error downloading ", remote_path, ": ", metadata$name, " already exists on local machine at ", local_path)
+            stop("Error downloading '", remote_path, basename(local_path), "' from DNAnexus: a file already exists on local machine at '", local_path, "'")
           } else {
             # 'local_path' points to a file with a different name to the remote file
-            stop("Error downloading ", remote_path, ": file already exists on local machine at ", local_path)
+            stop("Error downloading '", remote_path, "' to '", local_path, "' from DNAnexus: file already exists on local machine")
           }
         } else if (exists == "skip") {
           if (!silent) {
-            cat(local_path, "already exists on local machine, skipping download of", dx_path_from_metadata(metadata), "\n")
+            if (file.exists(local_path) && !dir.exists(local_path) && basename(local_path) == metadata$name) {
+              # 'local_path' points to a file with the same name as the remote file
+              cat(sep="", "'", local_path, "' already exists on local machine, skipping download of '", remote_path, "' from DNAnexus\n")
+            } else if (file.exists(local_path) && dir.exists(local_path)) {
+              # 'local_path' points to a folder that contains a file with the same name as the remote file
+              if (!grepl("/$", local_path)) local_path <- paste0(local_path, "/")
+              cat(sep="", "'", local_path, "' already exists on local machine, skipping download of '", remote_path, basename(local_path), "' from DNAnexus\n")
+            } else {
+              # 'local_path' points to a file with a different name to the remote file
+              cat(sep="", "'", local_path, "' already exists on local machine, skipping download of '", remote_path, "' from DNAnexus to this file path\n")
+            }
           }
         }
       }
@@ -145,12 +159,12 @@ dx_download <- function(remote_path, local_path=".", exists="skip", missing="err
         }
 
         # Download the file
-        msg <- suppressWarnings(system(sprintf("dx download -f '%s' -o '%s' 2>&1", remote_path, local_path), intern=TRUE))
+        msg <- suppressWarnings(system(sprintf("dx download -f '%s' -o '%s' 2>&1", normalized_remote_path, local_path), intern=TRUE))
         if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
 
         # Print out success message
         if (!silent) {
-          cat(dx_path_from_metadata(metadata), "on DNAnexus downloaded to local machine at", local_path, "\n")
+          cat(sep="", "'", remote_path, "' on DNAnexus downloaded to local machine at '", local_path, "'\n")
         }
       }
 
@@ -165,144 +179,145 @@ dx_download <- function(remote_path, local_path=".", exists="skip", missing="err
         return(local_path)
       }
 
-    } else { # GOTO HERE
+    } else {
       # 'remote_path' is a folder to download
 
       # Get information about all the files at the remote_path
-      file_list_metadata <- suppressWarnings(system(sprintf("dx find data --path '%s' --json 2>&1", remote_path), intern=TRUE))
+      file_list_metadata <- suppressWarnings(system(sprintf("dx find data --path '%s' --json 2>&1", normalized_remote_path), intern=TRUE))
       if (!is.null(attr(file_list_metadata, "status"))) stop(paste(file_list_metadata, collapse="\n"))
       file_list_metadata <- fromJSON(file_list_metadata)
 
-      # Get the absolute remote path of each file
-      file_list_metadata$remote_path <- paste0(
-        file_list_metadata$project, ":",
-        gsub("^/$", "", file_list_metadata$describe$folder), "/",
-        file_list_metadata$describe$name
-      )
-
-      # Determine location to download each file to
-      if (grepl("/$", remote_path)) {
-        remote_root <- sprintf("^%s%s", metadata$folder, metadata$name)
-      } else if (metadata$folder != "/") {
-        remote_root <- sprintf("^%s", metadata$folder)
-      } else {
-        remote_root <- "^"
-      }
-
-      # Determine the local path for each download
-      file_list_metadata$local_path <- paste0(
-        gsub("/$", "", local_path),
-        gsub(remote_root, "", file_list_metadata$describe$folder),
-        "/", file_list_metadata$describe$name
-      )
-      file_list_metadata$local_path <- gsub("^\\./", "", file_list_metadata$local_path)
-      if (local_path == "") file_list_metadata$local_path <- gsub("^/", "", file_list_metadata$local_path)
-
-      # Check for duplicate files that mean we can't proceed
+      # If there are now files, download the directory structure regardless
       if (length(file_list_metadata) > 0) {
+
+        # Get the absolute remote path of each file
+        file_list_metadata$normalized_remote_path <- paste0(
+          file_list_metadata$project, ":",
+          gsub("^/$", "", file_list_metadata$describe$folder), "/",
+          file_list_metadata$describe$name
+        )
+
+        # Get the relative remote paths
+        file_list_metadata$remote_path <- paste0(
+          remote_path,
+          gsub(normalized_remote_path, "", file_list_metadata$normalized_remote_path, fixed=TRUE)
+        )
+
+        # Determine location to download each file to
+        if (grepl("/$", remote_path)) {
+          file_list_metadata$local_path <- paste0(
+            gsub("/$", "", local_path), "/",
+            gsub(paste0("^", remote_path), "", file_list_metadata$remote_path)
+          )
+        } else {
+          file_list_metadata$local_path <- paste0(
+            gsub("/$", "", local_path), "/",
+            basename(remote_path),
+            gsub(paste0("^", remote_path), "", file_list_metadata$remote_path)
+          )
+        }
+
+        # Check for duplicate files that mean we can't proceed
         dups <- unique(file_list_metadata$local_path[duplicated(file_list_metadata$local_path)])
         if (length(dups) > 0) {
           dups <- file_list_metadata[file_list_metadata$local_path %in% dups,]
-          stop("Multiple files with the same file path found at ", remote_path, ":\n",
-               paste("    ", paste(dups$remote_path, ":", dups$id), collapse="\n"))
+          stop("Multiple files with the same file path found at '", remote_path, "' on DNAnexus:\n",
+               paste(paste0("    '", dups$remote_path, "' : '", dups$id, "'"), collapse="\n"))
         }
-      }
 
-      # Check if any are in the open state, and if they are, check whether any
-      # have a "uploaded_by" property matching the current DNAnexus job ID.
-      # If there are matches, delete those files, remove them from the download
-      # list, and continue
-      if (
-        length(file_list_metadata) > 0 &&
-        any(file_list_metadata$describe$state == "open") &&
-        Sys.getenv("DX_JOB_ID") != ""
-      ) {
-        for (fid in which(file_list_metadata$describe$state == "open")) {
-          file_metadata <- dx_get_metadata(file_list_metadata$id[fid])
-          new_state <- dx_state(file_metadata)
-          file_list_metadata$describe$state[fid] <- new_state
+        # Check if any are in the open state, and if they are, check whether any
+        # have a "uploaded_by" property matching the current DNAnexus job ID.
+        # If there are matches, delete those files, remove them from the download
+        # list, and continue
+        if (
+          any(file_list_metadata$describe$state == "open") &&
+          Sys.getenv("DX_JOB_ID") != ""
+        ) {
+          for (fid in which(file_list_metadata$describe$state == "open")) {
+            file_metadata <- dx_get_metadata(file_list_metadata$id[fid])
+            new_state <- dx_state(file_metadata)
+            file_list_metadata$describe$state[fid] <- new_state
+          }
+          file_list_metadata <- file_list_metadata[file_list_metadata$describe$state != "none",]
         }
-        file_list_metadata <- file_list_metadata[file_list_metadata$describe$state != "none",]
-      }
 
-      # If any files remain in the open state, defer to the 'incomplete' setting
-      if (
-        length(file_list_metadata) > 0 &&
-        any(file_list_metadata$describe$state == "open")
-      ) {
-        incomplete_files <- file_list_metadata[file_list_metadata$describe$state == "open", ]
-        incomplete_files <- sprintf("%s:%s/%s", incomplete_files$describe$project,
-          incomplete_files$describe$folder, incomplete_files$describe$name)
+        # If any files remain in the open state, defer to the 'incomplete' setting
+        if (
+          any(file_list_metadata$describe$state == "open")
+        ) {
+          incomplete_files <- file_list_metadata[file_list_metadata$describe$state == "open", "normalized_remote_path"]
 
-        if (incomplete == "error") {
-          stop(remote_path, " contains ", length(incomplete_files),
-               " incomplete files:\n", paste(incomplete_files, collapse="\n"))
-        } else if (incomplete == "skip") {
-          file_list_metadata <- file_list_metadata[file_list_metadata$describe$state != "open",]
-        } else if (incomplete == "wait") {
-          cat(remote_path, "contains", length(incomplete_files),
-              "incomplete files:\n", paste(incomplete_files, collapse="\n"),
-              "waiting 10s for files to finish uploading before trying again...\n")
+          if (incomplete == "error") {
+            stop("'", remote_path, "' on DNAnexus contains ", length(incomplete_files),
+                 " incomplete files:\n", paste(paste0("    '", incomplete_files, "'"), collapse="\n"))
+          } else if (incomplete == "skip") {
+            if (!silent) {
+              cat(sep="", "Skipping download of ", length(incomplete), " incomplete files on DNAnexus at '",
+                  remote_path, "':", paste(paste0("    '", incomplete_files, "'"), collapse="\n"))
+            }
+            file_list_metadata <- file_list_metadata[file_list_metadata$describe$state != "open",]
+          } else if (incomplete == "wait") {
+            cat(sep="", "'", remote_path, "' on DNAnexus contains ", length(incomplete_files),
+                " incomplete files:\n", paste(paste0("    '", incomplete_files, "'"), collapse="\n"),
+                "Waiting 10s for files to finish uploading before trying again...\n")
+            Sys.sleep(10)
+            next
+          }
+        }
+
+        # If any files are closing, wait for them to finish
+        if (
+          any(file_list_metadata$describe$state == "closing")
+        ) {
+          closing_files <- file_list_metadata[file_list_metadata$describe$state == "closing", "normalized_remote_path"]
+
+          cat(sep="", "'", remote_path, "' on DNAnexus contains ", length(closing_files),
+              " files in the process of closing:\n", paste(paste0("    '", closing_files, "'"), collapse="\n"),
+              "Waiting 10s for DNAnexus to finalize the files before trying again...\n")
           Sys.sleep(10)
           next
         }
-      }
 
-      # If any files are closing, wait for them to finish
-      if (
-        length(file_list_metadata) > 0 &&
-        any(file_list_metadata$describe$state == "closing")
-      ) {
-        closing_files <- file_list_metadata[file_list_metadata$describe$state == "closing", ]
-        closing_files <- sprintf("%s:%s/%s", closing_files$describe$project,
-          closing_files$describe$folder, closing_files$describe$name)
+        # Check whether any of these files already exist, in accordance with the
+        # 'exists' argument
+        file_list_metadata$exists <- file.exists(file_list_metadata$local_path)
 
-        cat(remote_path, "contains", length(incomplete_files),
-            "files in the process of closing:\n", paste(incomplete_files, collapse="\n"),
-            "waiting 10s for DNAnexus to finalize files before trying again...\n")
-        Sys.sleep(10)
-        next
-      }
+        if (any(file_list_metadata$exists)) {
+          files_exist <- file_list_metadata[file_list_metadata$exists, "normalized_remote_path"]
 
-      # Check whether any of these files already exist, in accordance with the
-      # 'exists' argument
-      file_list_metadata$exists <- file.exists(file_list_metadata$local_path)
+          if (exists == "error") {
+            stop(length(files_exist), " files from '", remote_path,
+              "' on DNAnexus already exist on the local machine at '", gsub("/$", "", local_path),
+              "'/:", paste(paste("    '", files_exist, files_exist$local_path), collapse="\n"))
 
-      if (any(file_list_metadata$exists)) {
-        files_exist <- file_list_metadata[file_list_metadata$exists, ]
-        files_exist_remote <- sprintf("%s:%s/%s", files_exist$describe$project,
-                                      files_exist$describe$folder, files_exist$describe$name)
-        if (exists == "error") {
-          stop(length(files_exist), " files from ", remote_path,
-            " already exist on the local machine at ", gsub("/$", "", local_path),
-            "/:", paste(paste(files_exist_remote, files_exist$local_path), collapse="\n"))
+          } else if (exists == "skip") {
+            cat(paste(paste(files_exist_remote,
+              "on DNAnexus skipped as a file on the local machine already exists at",
+              files_exist$local_path), collapse="\n"), "\n")
 
-        } else if (exists == "skip") {
-          cat(paste(paste(files_exist_remote,
-            "on DNAnexus skipped as a file on the local machine already exists at",
-            files_exist$local_path), collapse="\n"), "\n")
-
-          file_list_metadata <- file_list_metadata[!file_list_metadata$exists,]
+            file_list_metadata <- file_list_metadata[!file_list_metadata$exists,]
+          }
         }
       }
 
       # If we have reached this point without error we can recreate the remote
       # directory tree in the designated local_path
-      dx_clone_tree(remote_path, local_path)
+      dx_clone_tree(normalized_remote_path, local_path, silent=silent)
 
       # Download each of the files
       for (ii in seq_len(nrow(file_list_metadata))) {
         msg <- suppressWarnings(system(sprintf(
             "dx download -f '%s' -o '%s' 2>&1",
-            file_list_metadata$remote_path[ii], file_list_metadata$local_path[ii]
+            file_list_metadata$normalized_remote_path[ii],
+            file_list_metadata$local_path[ii]
           ), intern=TRUE))
         if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
 
         # Print out success message
         if (!silent) {
-          cat(file_list_metadata$remote_path[ii],
-            "on DNAnexus downloaded to local machine at",
-            file_list_metadata$local_path[ii], "\n")
+          cat(sep="", "'", file_list_metadata$remote_path[ii],
+            "' on DNAnexus downloaded to local machine at '",
+            file_list_metadata$local_path[ii], "'\n")
         }
       }
 
@@ -336,9 +351,36 @@ dx_download <- function(remote_path, local_path=".", exists="skip", missing="err
 #' @inheritParams remote_path
 #' @param local_path location on the local machine to download the file or folder.
 #' @param remote_subdir subdirectory relative to the remote_path (see Details)
+#' @param silent logical; if TRUE does not print message when creating each
+#'   folder
 #'
 #' @returns NULL
-dx_clone_tree <- function(remote_path, local_path, remote_subdir) {
+dx_clone_tree <- function(remote_path, local_path, remote_subdir, silent) {
+  local_path <- gsub("/$", "", local_path) # means we don't get // in local tree message print outs
+
+  # Create the remote directory at the current depth of the remote tree in the
+  # respective location on the local path
+  if (missing(remote_subdir)) {
+    if (grepl("/$", remote_path)) {
+      newdir <- local_path
+    } else {
+      newdir <- sprintf("%s/%s", local_path, basename(remote_path))
+    }
+  } else {
+    if (grepl("/$", remote_path)) {
+      newdir <- sprintf("%s/%s", local_path, remote_subdir)
+    } else {
+      newdir <- sprintf("%s/%s/%s", local_path, basename(remote_path), remote_subdir)
+    }
+  }
+  if (!dir.exists(newdir)) {
+    msg <- suppressWarnings(system(sprintf("mkdir -p '%s'", newdir), intern=TRUE))
+    if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
+    if (!silent) {
+      cat(sep="", "Created missing local directory '", newdir, "'\n")
+    }
+  }
+
   # Get list of subdirectories at current depth of the remote tree
   if (missing(remote_subdir)) {
     subdirs <- suppressWarnings(system(sprintf("dx ls '%s' --folders", remote_path), intern=TRUE))
@@ -351,29 +393,9 @@ dx_clone_tree <- function(remote_path, local_path, remote_subdir) {
   # Recurse into them with this function
   for (sd in subdirs) {
     if (missing(remote_subdir)) {
-      dx_clone_tree(remote_path, local_path, sd)
+      dx_clone_tree(remote_path, local_path, sd, silent)
     } else {
-      dx_clone_tree(remote_path, local_path, sprintf("%s/%s", remote_subdir, sd))
-    }
-  }
-
-  # Create the remote directory at the current depth of the remote tree in the
-  # respective location on the local path
-  if (missing(remote_subdir)) {
-    if (grepl("/$", remote_path)) {
-      msg <- suppressWarnings(system(sprintf("mkdir -p '%s'", local_path), intern=TRUE))
-      if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
-    } else {
-      msg <- suppressWarnings(system(sprintf("mkdir -p '%s/%s'", local_path, basename(remote_path)), intern=TRUE))
-      if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
-    }
-  } else {
-    if (grepl("/$", remote_path)) {
-      msg <- suppressWarnings(system(sprintf("mkdir -p '%s/%s'", local_path, remote_subdir), intern=TRUE))
-      if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
-    } else {
-      msg <- suppressWarnings(system(sprintf("mkdir -p '%s/%s/%s'", local_path, basename(remote_path), remote_subdir), intern=TRUE))
-      if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n"))
+      dx_clone_tree(remote_path, local_path, sprintf("%s/%s", remote_subdir, sd), silent)
     }
   }
 }

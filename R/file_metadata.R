@@ -192,6 +192,12 @@ dx_exists <- function(remote_path, incomplete=TRUE) {
   stopifnot(length(remote_path) == 1)
   stopifnot(length(incomplete) == 1 && incomplete %in% c(TRUE, FALSE))
 
+  # If not the current project, check we can access
+  if (dx_path_contains_project(remote_path)) {
+    # Don't need the metadata, just want to error if we can't access the user-provided project
+    dx_get_project_metadata(remote_path)
+  }
+
   # Determine state of object, if one exists, at the remote path
   metadata <- dx_get_metadata(remote_path)
   remote_state <- dx_state(metadata)

@@ -35,6 +35,18 @@ dx_upload <- function(local_path, remote_path=".", exists="replace", silent=FALS
     stop("could not upload ", local_path, " to DNAnexus, file/folder not found")
   }
 
+  # Convert remote_path to an absolute path, primarily so we can bypass any
+  # wrapping job container to interface with project storage on running jobs
+  normalized_remote_path <- dx_normalize_path(remote_path)
+
+  # Get information about the project at that location - primarily to check we
+  # can actually access it from this job at this poit
+  project_metadata <- dx_get_project_metadata(remote_path)
+
+  # Make sure we have at necessary permissions to upload files
+  assert_dx_project_permissions(project_metadata, "CONTRIBUTE")
+
+
   if (!dir.exists(local_path)) {
     # We are uploading a file
 
@@ -46,19 +58,14 @@ dx_upload <- function(local_path, remote_path=".", exists="replace", silent=FALS
       remote_path <- paste0(remote_path, basename(local_path))
     }
 
-    # Convert remote_path to an absolute path, primarily so we can bypass any
-    # wrapping job container to interface with project storage on running jobs
-    normalized_remote_path <- dx_normalize_path(remote_path)
+    # Also add the filename to the normalized_remote_path if its a folder
+    if (grepl("/$", normalized_remote_path)) {
+      normalized_remote_path <- paste0(normalized_remote_path, basename(local_path))
+    }
 
     # Find out if anything exists already at the target location
     location_metadata <- dx_get_metadata(normalized_remote_path)
     location_type <- dx_type(location_metadata)
-
-    # Get information about the project at that location
-    project_metadata <- dx_get_project_metadata(location_metadata$project[1]) # [1] in case duplicate files
-
-    # Make sure we have at necessary permissions
-    assert_dx_project_permissions(project_metadata, "CONTRIBUTE")
 
     # Defer to 'exists' argument if file already exists on the target location
     if (length(location_type) > 1 || !(dx_type(location_metadata) %in% c("none", "folder"))) {
@@ -158,13 +165,6 @@ dx_upload <- function(local_path, remote_path=".", exists="replace", silent=FALS
       # Look up the file using dx_get_metadata - and also delete any incomplete
       # uploads initated by the current DNAnexus job
       remote_metadata <- dx_get_metadata(file_list$abs_remote_path[ii])
-
-      # Get project metadata and check we have CONTRIBUTE permissions, this
-      # only needs to be done once not for every file
-      if (ii == 1) {
-        project_metadata <- dx_get_project_metadata(remote_metadata$project[1])
-        assert_dx_project_permissions(project_metadata, "CONTRIBUTE")
-      }
 
       # Handle existing files based on the "exists" argument
       remote_type <- dx_type(remote_metadata)

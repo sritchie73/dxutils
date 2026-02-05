@@ -25,6 +25,10 @@ and restarted by AWS ([learn more](https://dnanexus.gitbook.io/uk-biobank-rap/wo
       property to each file, making it possible for low-priority jobs that were 
       restarted mid-upload detect and clean up these incomplete files.
       
+  (4) Automatically bypasses the container project of the DNAnexus job so that
+      files are uploaded to the project storage, rather than the temporary job
+      container project.
+      
 - `dx_download()`: Wrapper for the `dx download` command line tool that:
  
   (1) When run as part of a DNAnexus job and encountering an incomplete file, 
@@ -39,15 +43,31 @@ and restarted by AWS ([learn more](https://dnanexus.gitbook.io/uk-biobank-rap/wo
   
   (3) Can optionally skip or wait for files that do not exist yet on DNAnexus
       (default is to throw an error).
+      
+  (4) Automatically bypasses the container project of the DNAnexus job.
+  
+  (5) Waits for files that are mid-upload by other processes to finish before
+      downloading, or alternatively throws an error.
 
-- `dx_rm()`: Wrapper for `dx rm` that also gracefully handles projects where
-  the user has permissions to create and move files, but not delete them, by
-  moving target files to a folder named "trash/" in the project.
+- `dx_rm()`: Wrapper for the `dx rm` command line tool that:
+
+  (1) Automatically bypasses the container project of the DNAnexus job so that
+      `dx rm` is executed on files in project storage, rather than the temporary
+      job container project.
+      
+  (2) gracefully handles projects where the user has permissions to create and 
+       move files, but not delete them, by moving target files to a folder named
+       "trash/" in the project.
     
 - `dx_exists()`: check whether a file or folder exists on DNAnexus, optionally
-  returning `FALSE` when encountering an incomplete file. Deletes incomplete 
-  files if they match the current DNAnexus job ID (i.e. indicating that 
-  current job is a low-priority job that was interuppted mid-upload).
+  returning `FALSE` when encountering an incomplete file:
+  
+  (1) Automatically bypasses the container project of the DNAnexus job when 
+      looking for files or folders.
+      
+  (2) Deletes incomplete files if they match the current DNAnexus job ID (i.e. 
+      indicating that current job is a low-priority job that was interuppted 
+      mid-upload).
     
 - `assert_dx_exists()`: wrapper for `dx_exists()` that throws an error if 
   `dx_exists()` returns `FALSE`.

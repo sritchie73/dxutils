@@ -69,14 +69,14 @@ dx_normalize_path <- function(remote_path, return_as_parts=FALSE) {
       rel_path <- remote_path
     } else if (remote_path == ".") {
       wd <- env[env$key == "Current folder", "value"]
-      if (wd == "/") {
+      if (wd == "/" || wd == "None") {
         rel_path <- wd
       } else {
         rel_path <- paste0(wd, "/")
       }
     } else {
       wd <- env[env$key == "Current folder", "value"]
-      if (wd == "/") {
+      if (wd == "/" || wd == "None") {
         rel_path <- paste0(wd, gsub("^\\./", "", remote_path))
       } else {
         rel_path <- sprintf("%s/%s", wd, remote_path)

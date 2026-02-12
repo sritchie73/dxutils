@@ -147,9 +147,17 @@ dx_upload <- function(local_path, remote_path=".", exists="replace", silent=FALS
         gsub(paste0("^", local_path), "", file_list$local_path)
       )
     } else {
-      file_list$remote_path <- paste0(
-        gsub("/$", "", remote_path), "/", file_list$local_path
-      )
+      if (dirname(local_path) != ".") {
+        file_list$remote_path <- paste0(
+          gsub("/$", "", remote_path),
+          gsub(paste0("^", dirname(local_path)), "", file_list$local_path)
+        )
+      } else {
+        file_list$remote_path <- paste0(
+          gsub("/$", "", remote_path), "/", file_list$local_path
+        )
+      }
+
     }
     file_list$remote_path <- gsub("^\\./", "", file_list$remote_path)
 

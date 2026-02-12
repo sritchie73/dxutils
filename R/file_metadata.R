@@ -225,7 +225,7 @@ throw_file_not_exists_error <- function(remote_path) {
   } else if (dx_is_container_job()) {
     parent_project <- Sys.getenv("DX_PROJECT_CONTEXT_ID")
     parent_project_metadata <- dx_get_project_metadata(paste0(parent_project, ":"))
-    stop("'", remote_path, "' not found in project storage attached to the",
+    stop("'", remote_path, "' not found in project storage attached to the ",
          "current DNAnexus job ('", parent_project_metadata$name, "' : ",
          parent_project, ")")
   } else {

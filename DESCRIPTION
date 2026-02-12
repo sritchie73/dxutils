@@ -1,7 +1,7 @@
 Package: dxutils
 Type: Package
 Title: DNAnexus command line utility wrappers and extensions
-Version: 0.2.2
+Version: 0.2.3
 Authors@R: person(given="Scott", family="Ritchie", 
                   email="sritchie73@gmail.com", 
                   role=c("aut", "cre"),

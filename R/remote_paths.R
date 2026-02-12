@@ -52,7 +52,13 @@ dx_normalize_path <- function(remote_path, return_as_parts=FALSE) {
     # storage or a different folder within project storage.
     project <- Sys.getenv("DX_PROJECT_CONTEXT_ID")
     rel_path <- remote_path
-    if (!grepl("^/", remote_path)) rel_path <- paste0("/", rel_path)
+    if (rel_path %in% c(".", "./")) {
+      rel_path <- "/"
+    } else if (grepl("^\\./", rel_path)) {
+      rel_path <- gsub("^\\.", "", rel_path)
+    } else if  (!grepl("^/", rel_path)) {
+      rel_path <- paste0("/", rel_path)
+    }
 
     abs_path <- sprintf("%s:%s", project, rel_path)
   } else {
@@ -88,7 +94,7 @@ dx_normalize_path <- function(remote_path, return_as_parts=FALSE) {
 
   # Return the path now, unless we need to split up and return as parts
   if (!return_as_parts) {
-    return(abs_path)
+    return(gsub("//", "/", abs_path))
   } else {
     project_id <- gsub("^(project-[0123456789BFGJKPQVXYZbfgjkpqvxyz]{24}).*", "\\1", abs_path)
     rel_path <- gsub("project-[0123456789BFGJKPQVXYZbfgjkpqvxyz]{24}:", "", abs_path)
@@ -102,7 +108,7 @@ dx_normalize_path <- function(remote_path, return_as_parts=FALSE) {
         basename <- paste0(basename, "/")
       }
     }
-    return(list("project"=project_id, "folder"=dirname, "name"=basename))
+    return(list("project"=project_id, "folder"=gsub("//", "/", dirname), "name"=basename))
   }
 }
 

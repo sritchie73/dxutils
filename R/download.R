@@ -288,12 +288,12 @@ dx_download <- function(remote_path, local_path=".", exists="skip", missing="err
           if (exists == "error") {
             stop(length(files_exist), " files from '", remote_path,
               "' on DNAnexus already exist on the local machine at '", gsub("/$", "", local_path),
-              "'/:", paste(paste("    '", files_exist, files_exist$local_path), collapse="\n"))
+              "'/:", paste(paste("    '", files_exist, file_list_metadata$local_path), collapse="\n"))
 
           } else if (exists == "skip") {
             cat(paste(paste(files_exist,
               "on DNAnexus skipped as a file on the local machine already exists at",
-              files_exist$local_path), collapse="\n"), "\n")
+              file_list_metadata$local_path), collapse="\n"), "\n")
 
             file_list_metadata <- file_list_metadata[!file_list_metadata$exists,]
           }

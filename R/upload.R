@@ -75,7 +75,7 @@ dx_upload <- function(local_path, remote_path=".", exists="replace", silent=FALS
         return(invisible(NULL))
       } else if (exists == "replace") {
         if (dx_user_can_rm(project_metadata)) {
-          msg <- suppressWarnings(system(sprintf("dx rm -rfa '%s' 2>&1", remote_path), intern=TRUE))
+          msg <- suppressWarnings(system(sprintf("dx rm -rfa '%s' 2>&1", normalized_remote_path), intern=TRUE))
           if (!is.null(attr(msg, "status"))) stop(paste(msg, collapse="\n")) # Something has gone wrong, we should be able to 'dx rm'
           if (!silent) {
             for (fid in location_metadata$id) {
@@ -87,7 +87,7 @@ dx_upload <- function(local_path, remote_path=".", exists="replace", silent=FALS
             if (length(location_metadata$id) == 1) {
               msg <- suppressWarnings(system(sprintf(
                 "dx mv '%s' %s:trash/ 2>&1",
-                remote_path, location_metadata$project
+                normalized_remote_path, location_metadata$project
               ), intern=TRUE))
             } else {
               msg <- suppressWarnings(system(sprintf(

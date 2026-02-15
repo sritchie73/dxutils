@@ -69,6 +69,9 @@ dx_get_metadata <- function(remote_path) {
       } else {
         return(c(id=NA, dx_normalize_path(remote_path, return_as_parts=TRUE), class="none"))
       }
+    } else if (grepl("dxpy.exceptions.ResourceNotFound", exists[1])) {
+      # Folder does not exist
+      return(c(id=NA, dx_normalize_path(remote_path, return_as_parts=TRUE), class="none"))
     } else {
       stop(paste(exists, collapse="\n")) # Some other error (e.g. permissions, connecting to server, etc.)
     }

@@ -82,7 +82,10 @@ dx_normalize_path <- function(remote_path, return_as_parts=FALSE) {
       }
     } else {
       wd <- env[env$key == "Current folder", "value"]
-      if (wd == "/" || wd == "None") {
+      if (wd == "None") {
+        wd <- "/"
+      }
+      if (wd == "/") {
         rel_path <- paste0(wd, gsub("^\\./", "", remote_path))
       } else {
         rel_path <- sprintf("%s/%s", wd, remote_path)
